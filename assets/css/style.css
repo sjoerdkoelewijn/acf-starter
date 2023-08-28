@@ -1,0 +1,8 @@
+.content-image-block {
+  display: flex;
+  gap: 2vw;
+}
+
+.content-image-block.right {
+  flex-direction: row-reverse;
+}/*# sourceMappingURL=style.css.map */
