@@ -127,26 +127,68 @@ Two things go wrong on Windows if you use the macOS line:
 Read the two halves back with `cat` on macOS and Linux, or with
 `Get-Content <path> -Raw` in PowerShell.
 
-**2. Put the public half on Cloudways.** In the panel, under the server's
-**Settings & Packages → SSH Public Keys**, add the contents of
-`~/.ssh/cloudways_deploy.pub`. Use an application user, not the master user.
+**2. Put the public half on the application user.**
 
-**3. Pin the host key** so the runner cannot be sent to the wrong server:
+Keep this at application level. The key then reaches one application, not the
+whole server, and you can take it away without touching anything else.
+
+Cloudways has an **SSH Public Keys** screen at server level, but that one
+serves the **master** user only. An application user gets the key by hand,
+which is one command.
+
+First get the user: **Applications → your app → Access Details**. There is an
+SFTP/SSH block with a username and a password. Set a password if there is
+none.
+
+Then send the key. macOS or Linux:
+
+```bash
+ssh-copy-id -i ~/.ssh/cloudways_deploy.pub <app_user>@<server-ip>
+```
+
+Windows PowerShell, where `ssh-copy-id` does not exist:
+
+```powershell
+Get-Content "$env:USERPROFILE\.ssh\cloudways_deploy.pub" | ssh <app_user>@<server-ip> "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+```
+
+It asks for the application password once. After that the key works on its own.
+
+**3. Check the key, and read the path you need.**
+
+```bash
+ssh -i ~/.ssh/cloudways_deploy <app_user>@<server-ip> 'whoami; pwd; ls; wp --version'
+```
+
+In PowerShell put the remote command in **single** quotes, or PowerShell reads
+it first.
+
+The `pwd` line gives you `CW_APP_PATH`. An application user usually lands in
+the application folder, with `public_html` beside it, so the value is
+`public_html`. The master user lands higher, so it would be
+`applications/<app>/public_html`. The workflow reads the path from your login
+folder, so either form works. Use what you actually see.
+
+**Stay with one user.** If you upload the theme as the master user and then
+deploy as the application user, the deploy fails on file ownership. Pick the
+application user and keep to it.
+
+**4. Pin the host key** so the runner cannot be sent to the wrong server:
 
 ```bash
 ssh-keyscan <server-ip>
 ```
 
-**4. Add the secrets.** On GitHub, under **Settings → Secrets and variables →
+**5. Add the secrets.** On GitHub, under **Settings → Secrets and variables →
 Actions → Repository secrets**:
 
 | Secret | Value |
 | --- | --- |
 | `CW_SSH_HOST` | The server IP |
-| `CW_SSH_USER` | The application SSH user |
+| `CW_SSH_USER` | The application SSH user from step 2 |
 | `CW_SSH_KEY` | The whole of `~/.ssh/cloudways_deploy`, the private half |
-| `CW_APP_PATH` | `applications/<your-app>/public_html` |
-| `CW_SSH_KNOWN_HOSTS` | The output of step 3. Optional but do it. |
+| `CW_APP_PATH` | What `pwd` printed in step 3, plus `public_html` |
+| `CW_SSH_KNOWN_HOSTS` | The output of step 4. Optional but do it. |
 | `CW_SSH_PORT` | Only when it is not 22 |
 
 Never put these in a chat, an issue or a commit.
