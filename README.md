@@ -54,6 +54,7 @@ acf-starter/
 │   │   └── admin.css        The WordPress admin.
 │   └── js/
 │       └── theme.js         The menu button and the scroll bar width.
+├── demo/                    One command builds a full demo shop. See demo/README.md.
 ├── blocks/                  One folder for each ACF block.
 │   └── <slug>/
 │       ├── block.json       The block definition.
@@ -366,6 +367,22 @@ A child theme may also hold:
 * `blocks/<slug>/` — the parent registers child blocks in the same way.
 * `acf-json/` — the parent loads child field groups too.
 * `woocommerce/` — WooCommerce reads the child theme first.
+
+---
+
+## The demo
+
+`demo/` builds a complete shop on a clean WordPress install with one command:
+products with photos, categories with banners, a home page made from the theme
+blocks, the menus and all the settings.
+
+```bash
+bash wp-content/themes/acf-starter/demo/provision.sh
+```
+
+It is written for Cloudways and runs on any host with WP-CLI. See
+[demo/README.md](demo/README.md) for the steps, and for how to put your own
+products and photos in.
 
 ---
 

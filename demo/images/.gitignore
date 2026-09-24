@@ -1,0 +1,4 @@
+# Keep the folder, not the photos. Photos make a repository heavy.
+*
+!.gitignore
+!README.md

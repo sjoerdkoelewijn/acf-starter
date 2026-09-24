@@ -1,0 +1,4 @@
+# Never commit a paid plugin.
+*
+!.gitignore
+!README.md

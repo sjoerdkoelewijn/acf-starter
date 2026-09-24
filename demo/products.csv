@@ -1,0 +1,13 @@
+sku,name,category,price,sale_price,featured,stock,short_description,description,images
+AS-001,Merino crew jumper,clothing,129.00,,1,12,Fine merino wool. Warm and light.,"<p>Knitted in Portugal from fine merino wool. Warm, light, and it does not itch.</p><p>Wash at 30 degrees, inside out.</p>",
+AS-002,Linen shirt,clothing,89.00,69.00,1,8,Washed linen. Soft from the first wear.,"<p>Washed linen from a mill in Italy. It is soft on day one, and it gets softer.</p>",
+AS-003,Heavy cotton tee,clothing,45.00,,0,40,Thick cotton that keeps its shape.,"<p>Two hundred and forty grams of cotton. It keeps its shape after the wash.</p>",
+AS-004,Wool overshirt,clothing,189.00,,1,5,A shirt and a jacket in one.,"<p>Warm enough for autumn, light enough to wear inside.</p>",
+AS-005,Canvas tote,accessories,39.00,,0,25,Heavy canvas with leather handles.,"<p>Heavy cotton canvas, leather handles, one inside pocket.</p>",
+AS-006,Leather card holder,accessories,49.00,39.00,0,18,Four cards and a note.,"<p>Vegetable tanned leather. It darkens as you use it.</p>",
+AS-007,Wool scarf,accessories,59.00,,1,14,"Lambswool, woven in Scotland.","<p>Woven in a mill in Scotland from lambswool.</p>",
+AS-008,Cotton cap,accessories,29.00,,0,30,Washed cotton twill.,"<p>Washed cotton twill with a metal buckle.</p>",
+AS-009,Stoneware mug,home,19.00,,0,50,Made by hand. No two are the same.,"<p>Thrown by hand, so each one is a little different. Dishwasher safe.</p>",
+AS-010,Linen tea towel,home,15.00,12.00,0,60,Thick linen that dries fast.,"<p>Pure linen. It takes a few washes to reach its best.</p>",
+AS-011,Oak serving board,home,65.00,,1,9,Solid oak with a linseed finish.,"<p>Solid European oak, finished with linseed oil. Wipe it clean, never soak it.</p>",
+AS-012,Beeswax candle,home,24.00,,0,0,Pure beeswax. Burns for forty hours.,"<p>Poured from pure beeswax. It burns clean, with no scent added.</p>",
