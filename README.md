@@ -32,7 +32,9 @@ them and you reload the page.
   border controls. Only a small list of blocks is available.
 * **ACF blocks from a folder.** Add a folder in `/blocks` with a `block.json`
   and a `render.php`, and the block is there. You register nothing by hand.
-* **Field groups in git.** Every field group is a JSON file in `/acf-json`.
+* **Field groups in git, edited in the backend.** Every field group is a JSON
+  file in `/acf-json`. ACF writes the file when you save, and the theme reads a
+  newer file back in by itself. You never click **Sync**.
 * **WooCommerce with two template overrides only.** The rest is hooks and CSS,
   so a WooCommerce update cannot break the checkout.
 * **A small admin.** No dashboard widgets, no file editor, no block widgets.
@@ -43,7 +45,7 @@ them and you reload the page.
 
 ```
 acf-starter/
-├── acf-json/                ACF field groups. This folder is the source of truth.
+├── acf-json/                ACF field groups, in sync with the backend both ways.
 ├── assets/
 │   ├── css/
 │   │   ├── style.css        The front end.
@@ -127,9 +129,9 @@ inner blocks changes with each WooCommerce release.
    and the icon. Keep `"category": "sgwrd-blocks"`.
 3. Add `render.php`. Start it with
    `<section <?php echo sgwrd_block_attributes( $block, 'my-block' ); ?>>`.
-4. Turn on `WP_DEBUG`, open **Custom Fields → Field Groups**, and make a group
-   with the location rule **Block is equal to My Block**. ACF writes the JSON
-   file into `/acf-json` for you.
+4. Open **Custom Fields → Field Groups** and make a group with the location
+   rule **Block is equal to My Block**. ACF writes the JSON file into
+   `/acf-json` for you when you save.
 5. Add the CSS in `assets/css/style.css`.
 
 The block is now in the editor. You do not register it anywhere.
@@ -138,16 +140,63 @@ The block is now in the editor. You do not register it anywhere.
 
 ## Field groups and ACF
 
-The ACF admin menu is visible only when `WP_DEBUG` is `true`. On a live site the
-menu is hidden, and the field groups come from the JSON files in `/acf-json`.
-That keeps the field groups in git, and it stops anyone from changing a field
-group on production.
+You edit field groups in the backend, on the normal **Custom Fields** screen.
+The theme keeps that screen and the `/acf-json` folder in step, in both
+directions. You never click the ACF **Sync** button.
 
-To open the ACF menu on a site where `WP_DEBUG` is off:
+### How the two directions work
+
+**Backend → code.** ACF writes a JSON file into `/acf-json` each time you save
+a field group. This is the ACF feature called Local JSON.
+`sgwrd_acf_json_save_point()` points it at the theme. Commit the file with the
+rest of your change.
+
+**Code → backend.** `sgwrd_acf_sync_field_groups()` runs on each admin page
+load and compares each JSON file with the database:
+
+| What it finds | What it does |
+| --- | --- |
+| The JSON file is there, the database record is not | Import the group |
+| The JSON file is newer than the database record | Import the group |
+| The database record is newer | Do nothing. You are editing it now. |
+
+So after `git pull` or a deploy, the field groups are simply there. A notice at
+the top of the admin says which groups came in.
+
+The comparison uses the `modified` timestamp that ACF writes into each JSON
+file. A database record can never be overwritten by an older file.
+
+### Two people at the same time
+
+The rule "the newer one wins" is per field group, not per field. If two people
+change the **same** field group at the same time, the second save overwrites
+the first, and git shows you the conflict in the JSON file. Treat a field group
+like a source file: one person at a time.
+
+### Deleting a field group
+
+Delete it in the backend. ACF removes the JSON file from `/acf-json` as well.
+Commit that deletion.
+
+### Turning the automatic sync off
 
 ```php
-add_filter( 'sgwrd_acf_show_admin', '__return_true' );
+add_filter( 'sgwrd_acf_auto_sync', '__return_false' );
 ```
+
+ACF then shows its own **Sync available** tab again, and you click the button
+by hand.
+
+### Hiding the ACF menu on a live site
+
+The theme no longer hides it. Use the ACF filter if you want it hidden:
+
+```php
+add_filter( 'acf/settings/show_admin', '__return_false' );
+```
+
+Be careful with this on a site where you also want the automatic sync: the sync
+keeps working, but nobody can see or edit the field groups any more.
 
 ### The theme settings page
 
