@@ -89,6 +89,90 @@ without this.
 
 ---
 
+## Running it from GitHub, with no terminal
+
+`.github/workflows/cloudways.yml` runs all of this over SSH from a GitHub
+runner. After a one-time setup you never open a terminal again: you pick an
+action in the Actions tab and read the log.
+
+### One-time setup
+
+**1. Make a key just for this.** On your own machine:
+
+```bash
+ssh-keygen -t ed25519 -C "github-actions-cloudways" -f ~/.ssh/cloudways_deploy -N ""
+```
+
+**2. Put the public half on Cloudways.** In the panel, under the server's
+**Settings & Packages → SSH Public Keys**, add the contents of
+`~/.ssh/cloudways_deploy.pub`. Use an application user, not the master user.
+
+**3. Pin the host key** so the runner cannot be sent to the wrong server:
+
+```bash
+ssh-keyscan <server-ip>
+```
+
+**4. Add the secrets.** On GitHub, under **Settings → Secrets and variables →
+Actions → Repository secrets**:
+
+| Secret | Value |
+| --- | --- |
+| `CW_SSH_HOST` | The server IP |
+| `CW_SSH_USER` | The application SSH user |
+| `CW_SSH_KEY` | The whole of `~/.ssh/cloudways_deploy`, the private half |
+| `CW_APP_PATH` | `applications/<your-app>/public_html` |
+| `CW_SSH_KNOWN_HOSTS` | The output of step 3. Optional but do it. |
+| `CW_SSH_PORT` | Only when it is not 22 |
+
+Never put these in a chat, an issue or a commit.
+
+### Using it
+
+**Actions → Cloudways → Run workflow**, then pick:
+
+| Action | What it does |
+| --- | --- |
+| `status` | Reads the theme, plugins, content counts and settings. Changes nothing. |
+| `deploy` | Sends the theme to the server and activates it. |
+| `provision` | Deploy, then the whole setup and the demo content. |
+| `seed` | Rebuilds the demo content only. Faster. |
+| `seed-fresh` | Deletes the demo content and builds it again. Needs the tick box. |
+| `purge` | Clears the WordPress caches. |
+| `wp` | Runs one WP-CLI command that you type. |
+
+Start with `status`. It proves the key, the path and WP-CLI all work, and it
+cannot break anything.
+
+### What the workflow will not do
+
+The `wp` action sends your text to a shell on the server, so it is guarded:
+
+* Any shell character that could chain a second command is refused:
+  `; & | < > $ ( ) \` and backtick.
+* These are refused outright: `db drop`, `db reset`, `db query`, `db import`,
+  `site empty`, `user delete`, `plugin delete`, `theme delete`, `core
+  download`, `core update` and `eval`.
+* `search-replace` runs with `--dry-run` only.
+* `seed-fresh` needs the confirmation box ticked.
+
+**Be clear about what this is.** It stops a slip and a stray paste. It is not a
+security boundary: anybody who can push to this repository can change the
+workflow and run anything. So give the key one application, not the server, and
+keep write access to people you trust. Pull the key at any time by removing it
+in the Cloudways panel.
+
+A deploy uses `rsync --delete`, but it leaves `demo/images/` and
+`demo/plugins/` alone. Your photos and the ACF Pro zip survive it.
+
+### Adding a review gate
+
+To make a run need a second pair of eyes, make an Environment called
+`cloudways` under **Settings → Environments**, add yourself as a required
+reviewer, and put `environment: cloudways` in the job in the workflow file.
+
+---
+
 ## Running it again
 
 ```bash

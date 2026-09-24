@@ -1,0 +1,312 @@
+name: Cloudways
+
+# Run WP-CLI on the Cloudways demo from GitHub.
+#
+# Start it by hand: Actions -> Cloudways -> Run workflow. Pick what to do.
+# The run log shows everything the server printed, so a failure can be read
+# and fixed without opening a terminal.
+#
+# Secrets this workflow needs. Put them in
+# Settings -> Secrets and variables -> Actions -> Repository secrets.
+#
+#   CW_SSH_HOST          The server IP from the Cloudways panel.
+#   CW_SSH_USER          An application SSH user. Do not use the master user.
+#   CW_SSH_KEY           The private key. Its public half goes on Cloudways.
+#   CW_APP_PATH          applications/<your-app>/public_html
+#   CW_SSH_PORT          Optional. 22 when it is not set.
+#   CW_SSH_KNOWN_HOSTS   Optional. The output of
+#                        ssh-keyscan <host>. Without it the first run
+#                        trusts whatever answers, which is weaker.
+#
+# See demo/README.md for the full setup.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "What to do"
+        type: choice
+        required: true
+        default: status
+        options:
+          - status
+          - deploy
+          - provision
+          - seed
+          - seed-fresh
+          - purge
+          - wp
+      wp_command:
+        description: "For action 'wp': the WP-CLI command, without the word wp"
+        type: string
+        required: false
+        default: ""
+      confirm_fresh:
+        description: "Tick this to allow seed-fresh. It deletes the demo content first."
+        type: boolean
+        required: false
+        default: false
+
+# Two runs at once would fight over the same server.
+concurrency:
+  group: cloudways-demo
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: ${{ inputs.action }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      THEME_SLUG: acf-starter
+
+    steps:
+      - name: Get the repository
+        uses: actions/checkout@v4
+
+      - name: Check the secrets
+        env:
+          CW_SSH_HOST: ${{ secrets.CW_SSH_HOST }}
+          CW_SSH_USER: ${{ secrets.CW_SSH_USER }}
+          CW_SSH_KEY: ${{ secrets.CW_SSH_KEY }}
+          CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
+        run: |
+          set -euo pipefail
+          missing=""
+          [ -n "$CW_SSH_HOST" ] || missing="$missing CW_SSH_HOST"
+          [ -n "$CW_SSH_USER" ] || missing="$missing CW_SSH_USER"
+          [ -n "$CW_SSH_KEY" ]  || missing="$missing CW_SSH_KEY"
+          [ -n "$CW_APP_PATH" ] || missing="$missing CW_APP_PATH"
+          if [ -n "$missing" ]; then
+            echo "::error::These secrets are not set:$missing"
+            echo "Add them under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "All four secrets are there."
+
+      - name: Guard the inputs
+        env:
+          ACTION: ${{ inputs.action }}
+          WP_COMMAND: ${{ inputs.wp_command }}
+          CONFIRM_FRESH: ${{ inputs.confirm_fresh }}
+        run: |
+          set -euo pipefail
+
+          if [ "$ACTION" = "seed-fresh" ] && [ "$CONFIRM_FRESH" != "true" ]; then
+            echo "::error::seed-fresh deletes the demo content first. Tick 'confirm_fresh' to allow it."
+            exit 1
+          fi
+
+          if [ "$ACTION" != "wp" ]; then
+            exit 0
+          fi
+
+          if [ -z "$WP_COMMAND" ]; then
+            echo "::error::Action 'wp' needs a command in wp_command."
+            exit 1
+          fi
+
+          # The command is sent to a shell on the server. Block every character
+          # that could chain a second command onto it, so the input stays one
+          # WP-CLI call and nothing else.
+          if printf '%s' "$WP_COMMAND" | grep -q '[;&|<>`$()\\]'; then
+            echo "::error::wp_command holds a shell character. Keep it to one plain WP-CLI command."
+            exit 1
+          fi
+
+          if printf '%s' "$WP_COMMAND" | grep -q '[^[:print:]]'; then
+            echo "::error::wp_command holds a control character."
+            exit 1
+          fi
+
+          # Commands that lose data, or that run code this repository cannot review.
+          deny='^(db (drop|reset|query|import)|site empty|core (download|update|multisite-)|user delete|plugin delete|theme delete|eval )'
+          if printf '%s' "$WP_COMMAND" | grep -Eqi "$deny"; then
+            echo "::error::That command is on the deny list. Change the workflow in a commit if you really need it."
+            exit 1
+          fi
+
+          # search-replace rewrites the database. Only a dry run is allowed here.
+          if printf '%s' "$WP_COMMAND" | grep -Eqi '^search-replace' && \
+             ! printf '%s' "$WP_COMMAND" | grep -q -- '--dry-run'; then
+            echo "::error::search-replace is allowed with --dry-run only."
+            exit 1
+          fi
+
+          echo "wp $WP_COMMAND"
+
+      - name: Set up SSH
+        env:
+          CW_SSH_HOST: ${{ secrets.CW_SSH_HOST }}
+          CW_SSH_KEY: ${{ secrets.CW_SSH_KEY }}
+          CW_SSH_PORT: ${{ secrets.CW_SSH_PORT }}
+          CW_SSH_KNOWN_HOSTS: ${{ secrets.CW_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+
+          # Keep the address out of the log.
+          echo "::add-mask::$CW_SSH_HOST"
+
+          port="${CW_SSH_PORT:-22}"
+          echo "SSH_PORT=$port" >> "$GITHUB_ENV"
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$CW_SSH_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+
+          if [ -n "${CW_SSH_KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$CW_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+            echo "Host key came from CW_SSH_KNOWN_HOSTS."
+          else
+            ssh-keyscan -p "$port" -H "$CW_SSH_HOST" > ~/.ssh/known_hosts 2>/dev/null
+            echo "::warning::CW_SSH_KNOWN_HOSTS is not set, so this run trusts the key the server offered. Set the secret to close that gap."
+          fi
+
+          chmod 600 ~/.ssh/known_hosts
+
+          cat > ~/.ssh/config <<CONF
+          Host cloudways
+            HostName $CW_SSH_HOST
+            User ${{ secrets.CW_SSH_USER }}
+            Port $port
+            IdentityFile ~/.ssh/id_deploy
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            ServerAliveInterval 30
+          CONF
+          chmod 600 ~/.ssh/config
+
+          ssh -o ConnectTimeout=15 cloudways 'echo "Connected as $(whoami) on $(hostname)"'
+
+      - name: Check the server
+        env:
+          CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
+        run: |
+          set -euo pipefail
+
+          ssh cloudways "command -v wp >/dev/null" \
+            || { echo "::error::WP-CLI is not on this server."; exit 1; }
+
+          ssh cloudways "cd '$CW_APP_PATH' && wp core is-installed" \
+            || { echo "::error::No WordPress at $CW_APP_PATH. Check CW_APP_PATH."; exit 1; }
+
+          echo "WordPress $(ssh cloudways "cd '$CW_APP_PATH' && wp core version")"
+          echo "WP-CLI $(ssh cloudways 'wp --version' | awk '{print $2}')"
+
+      - name: Send the theme
+        if: inputs.action == 'deploy' || inputs.action == 'provision'
+        env:
+          CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
+        run: |
+          set -euo pipefail
+
+          target="$CW_APP_PATH/wp-content/themes/$THEME_SLUG"
+
+          # A wrong path plus --delete would remove the wrong folder. Refuse
+          # anything that is not the theme folder.
+          case "$target" in
+            */wp-content/themes/"$THEME_SLUG") ;;
+            *) echo "::error::The target path is wrong: $target"; exit 1 ;;
+          esac
+
+          ssh cloudways "command -v rsync >/dev/null" \
+            || { echo "::error::rsync is not on the server."; exit 1; }
+
+          ssh cloudways "mkdir -p '$target'"
+
+          # demo/images and demo/plugins live on the server only, so your
+          # photos and the ACF Pro zip survive a deploy.
+          rsync -az --delete \
+            --exclude '.git/' \
+            --exclude '.github/' \
+            --exclude 'node_modules/' \
+            --exclude 'demo/images/' \
+            --exclude 'demo/plugins/' \
+            ./ "cloudways:$target/"
+
+          echo "Theme sent to $target"
+          ssh cloudways "cd '$CW_APP_PATH' && wp theme activate '$THEME_SLUG'"
+
+      - name: Do it
+        env:
+          ACTION: ${{ inputs.action }}
+          WP_COMMAND: ${{ inputs.wp_command }}
+          CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
+        run: |
+          set -euo pipefail
+
+          app="$CW_APP_PATH"
+          theme="$app/wp-content/themes/$THEME_SLUG"
+
+          case "$ACTION" in
+
+            status)
+              ssh cloudways "cd '$app' && bash -s" <<'REMOTE'
+                set -u
+                echo "== Theme =="
+                wp theme list --fields=name,status,version
+                echo
+                echo "== Plugins =="
+                wp plugin list --fields=name,status,version
+                echo
+                echo "== Content =="
+                printf 'products   %s\n' "$(wp post list --post_type=product --post_status=publish --format=count)"
+                printf 'pages      %s\n' "$(wp post list --post_type=page --post_status=publish --format=count)"
+                printf 'categories %s\n' "$(wp term list product_cat --format=count 2>/dev/null || echo 0)"
+                printf 'media      %s\n' "$(wp post list --post_type=attachment --post_status=inherit --format=count)"
+                echo
+                echo "== Settings =="
+                printf 'home          %s\n' "$(wp option get home)"
+                printf 'permalinks    %s\n' "$(wp option get permalink_structure)"
+                printf 'front page    %s\n' "$(wp option get show_on_front)"
+                printf 'indexable     %s\n' "$(wp option get blog_public)"
+                printf 'currency      %s\n' "$(wp option get woocommerce_currency 2>/dev/null || echo '-')"
+                echo
+                echo "== Field groups =="
+                wp post list --post_type=acf-field-group --post_status=any --fields=post_title --format=csv 2>/dev/null || echo "none in the database yet"
+          REMOTE
+              ;;
+
+            deploy)
+              echo "The theme is on the server. Nothing else to do."
+              ;;
+
+            provision)
+              ssh cloudways "cd '$app' && bash '$theme/demo/provision.sh'"
+              ;;
+
+            seed)
+              ssh cloudways "cd '$app' && wp eval-file '$theme/demo/seed.php'"
+              ;;
+
+            seed-fresh)
+              ssh cloudways "cd '$app' && wp eval-file '$theme/demo/seed.php' fresh"
+              ;;
+
+            purge)
+              ssh cloudways "cd '$app' && wp cache flush && wp transient delete --all && wp rewrite flush"
+              echo
+              echo "::notice::Varnish is not cleared from here. Purge it in the Cloudways panel, under Application Settings."
+              ;;
+
+            wp)
+              # The guard step already refused anything that is not one plain
+              # WP-CLI call.
+              ssh cloudways "cd '$app' && wp $WP_COMMAND"
+              ;;
+
+            *)
+              echo "::error::Unknown action: $ACTION"
+              exit 1
+              ;;
+          esac
+
+      - name: Clean up
+        if: always()
+        run: rm -rf ~/.ssh

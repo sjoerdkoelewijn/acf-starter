@@ -380,9 +380,12 @@ blocks, the menus and all the settings.
 bash wp-content/themes/acf-starter/demo/provision.sh
 ```
 
-It is written for Cloudways and runs on any host with WP-CLI. See
-[demo/README.md](demo/README.md) for the steps, and for how to put your own
-products and photos in.
+It is written for Cloudways and runs on any host with WP-CLI.
+
+`.github/workflows/cloudways.yml` runs the same thing from the GitHub Actions
+tab, over SSH, so you need no terminal at all. See
+[demo/README.md](demo/README.md) for the steps, the secrets it needs, and how
+to put your own products and photos in.
 
 ---
 
