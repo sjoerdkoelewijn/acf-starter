@@ -97,24 +97,35 @@ action in the Actions tab and read the log.
 
 ### One-time setup
 
-**1. Make a key just for this.** On your own machine:
+**1. Make a key just for this.**
+
+Press Enter at `Enter passphrase`, and again at the confirmation. **The key
+must have no passphrase**, because a GitHub runner cannot type one.
+
+On macOS or Linux:
 
 ```bash
+mkdir -p ~/.ssh
 ssh-keygen -t ed25519 -C "github-actions-cloudways" -f ~/.ssh/cloudways_deploy
 ```
 
-On Windows PowerShell, write the path this way:
+On Windows PowerShell:
 
 ```powershell
-ssh-keygen -t ed25519 -C "github-actions-cloudways" -f $env:USERPROFILE\.ssh\cloudways_deploy
+New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.ssh" | Out-Null
+ssh-keygen -t ed25519 -C "github-actions-cloudways" -f "$env:USERPROFILE\.ssh\cloudways_deploy"
 ```
 
-Press Enter at `Enter passphrase`, and again at the confirmation. **The key must
-have no passphrase**, because a GitHub runner cannot type one.
+Two things go wrong on Windows if you use the macOS line:
 
-Do not add `-N ""` to set the empty passphrase on the command line. PowerShell
-drops an empty argument before the program sees it, and `ssh-keygen` then
-stops with `option requires an argument -- N`.
+* `ssh-keygen` does not understand `~`. PowerShell passes it through as a plain
+  character, and the key fails to save with `No such file or directory`.
+* `-N ""` sets an empty passphrase on other systems, but PowerShell drops an
+  empty argument before the program sees it, and `ssh-keygen` stops with
+  `option requires an argument -- N`. Leave the flag off and use the prompt.
+
+Read the two halves back with `cat` on macOS and Linux, or with
+`Get-Content <path> -Raw` in PowerShell.
 
 **2. Put the public half on Cloudways.** In the panel, under the server's
 **Settings & Packages → SSH Public Keys**, add the contents of
