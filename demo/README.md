@@ -100,8 +100,21 @@ action in the Actions tab and read the log.
 **1. Make a key just for this.** On your own machine:
 
 ```bash
-ssh-keygen -t ed25519 -C "github-actions-cloudways" -f ~/.ssh/cloudways_deploy -N ""
+ssh-keygen -t ed25519 -C "github-actions-cloudways" -f ~/.ssh/cloudways_deploy
 ```
+
+On Windows PowerShell, write the path this way:
+
+```powershell
+ssh-keygen -t ed25519 -C "github-actions-cloudways" -f $env:USERPROFILE\.ssh\cloudways_deploy
+```
+
+Press Enter at `Enter passphrase`, and again at the confirmation. **The key must
+have no passphrase**, because a GitHub runner cannot type one.
+
+Do not add `-N ""` to set the empty passphrase on the command line. PowerShell
+drops an empty argument before the program sees it, and `ssh-keygen` then
+stops with `option requires an argument -- N`.
 
 **2. Put the public half on Cloudways.** In the panel, under the server's
 **Settings & Packages → SSH Public Keys**, add the contents of
