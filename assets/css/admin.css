@@ -1,1 +1,25 @@
-/*# sourceMappingURL=admin.css.map */
+/**
+ * ACF Starter - the WordPress admin.
+ *
+ * Small changes only. The admin must stay the admin that the client knows.
+ */
+
+/* Make an ACF repeater row easier to read. */
+.acf-repeater .acf-row-handle {
+	background: #f6f7f7;
+}
+
+/* Give an ACF tab bar a clear edge. */
+.acf-tab-wrap {
+	border-bottom: 1px solid #dcdcde;
+}
+
+/* Keep the theme settings page the same width as the rest of the admin. */
+.acf-admin-page .acf-fields {
+	max-width: 60rem;
+}
+
+/* Show the block name on an ACF block in the editor sidebar. */
+.block-editor-block-card__description {
+	font-size: 12px;
+}

@@ -1,27 +1,29 @@
 <?php
+/**
+ * Theme bootstrap.
+ *
+ * This file only loads the modules in /functions. Put no logic here.
+ *
+ * @package ACF_Starter
+ */
 
 defined( 'ABSPATH' ) || exit;
 
-// Define constants.
-require_once get_template_directory() . '/functions/constants.php';
+$sgwrd_modules = array(
+	'constants',    // Version, paths and cache busting.
+	'setup',        // Theme support, menus, image sizes.
+	'assets',       // Styles and scripts.
+	'cleanup',      // Remove the default WordPress output you do not need.
+	'editor',       // Block editor rules: the allow list and the block styles.
+	'admin',        // A smaller, simpler WordPress admin.
+	'acf',          // ACF JSON sync, ACF blocks and the options page.
+	'template-tags',// Small helper functions for the templates.
+	'shortcodes',   // Theme shortcodes.
+	'woocommerce',  // Shop support. The file does nothing when WooCommerce is off.
+);
 
-// Load styles & scripts 
-require_once get_template_directory() . '/functions/enqueue.php';
+foreach ( $sgwrd_modules as $sgwrd_module ) {
+	require_once get_template_directory() . '/functions/' . $sgwrd_module . '.php';
+}
 
-// Remove default wp nonsense
-require_once get_template_directory() . '/functions/cleanup.php';
-
-// Add theme support
-require_once get_template_directory() . '/functions/theme_support.php';
-
-// Add custom block styles
-require_once get_template_directory() . '/functions/block_styles.php';
-
-// Add shortcodes
-require_once get_template_directory() . '/functions/shortcodes.php';
-
-// Add ACF Blocks
-require_once get_template_directory() . '/functions/acf_blocks.php';
-
-// Restict Blocks
-require_once get_template_directory() . '/functions/restrict_blocks.php';
+unset( $sgwrd_modules, $sgwrd_module );

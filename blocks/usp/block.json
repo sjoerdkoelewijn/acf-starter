@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "acf/usp",
+  "title": "Selling points",
+  "description": "A short row of reasons to buy, with an icon for each one.",
+  "category": "sgwrd-blocks",
+  "icon": "yes-alt",
+  "keywords": [
+    "usp",
+    "benefits",
+    "features"
+  ],
+  "textdomain": "acf-starter",
+  "supports": {
+    "anchor": true,
+    "align": [
+      "wide",
+      "full"
+    ],
+    "alignWide": true,
+    "color": false,
+    "spacing": false,
+    "typography": false,
+    "customClassName": true,
+    "className": true,
+    "html": false,
+    "jsx": false,
+    "multiple": true,
+    "reusable": false
+  },
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    }
+  },
+  "acf": {
+    "mode": "preview",
+    "renderTemplate": "render.php"
+  }
+}

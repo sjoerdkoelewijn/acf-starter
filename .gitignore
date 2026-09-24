@@ -1,0 +1,17 @@
+# Operating system
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.sublime-*
+
+# Dependencies. The theme has no build step, but a tool may add these.
+node_modules/
+vendor/
+
+# Logs and temporary files
+*.log
+*.bak
+*.tmp

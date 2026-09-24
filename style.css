@@ -1,9 +1,32 @@
-Theme Name:   ACF Starter
-Theme URI:    https://sjoerdkoelewijn.com
-Author:       Sjoerd Koelewijn
-Author URI:   https://sjoerdkoelewijn.com
-Description:  Starter theme for website development.
-Version:      0.0.1
-Text Domain:  ACFSTARTER
+/*
+Theme Name:       ACF Starter
+Theme URI:        https://github.com/sjoerdkoelewijn/acf-starter
+Author:           Sjoerd Koelewijn
+Author URI:       https://sjoerdkoelewijn.com
+Description:      Minimal classic starter theme for ACF Pro and WooCommerce. The theme gives structure, not decoration. Add the design in a child theme.
+Version:          1.0.0
+Requires at least: 6.5
+Tested up to:     6.8
+Requires PHP:     8.0
+License:          GPL-2.0-or-later
+License URI:      https://www.gnu.org/licenses/gpl-2.0.html
+Text Domain:      acf-starter
+Tags:             custom-menu, custom-logo, block-styles, e-commerce, translation-ready
 GitHub Theme URI: https://github.com/sjoerdkoelewijn/acf-starter
-Primary Branch: main
+Primary Branch:   main
+WC requires at least: 8.0
+WC tested up to:  9.9
+*/
+
+/*
+This file has no styles. WordPress reads only the header above.
+
+The theme loads its styles from:
+  assets/css/style.css        the front end
+  assets/css/woocommerce.css  the shop (loaded only when WooCommerce is active)
+  assets/css/editor.css       the block editor
+  assets/css/admin.css        the WordPress admin
+
+A child theme loads automatically when you put the file here:
+  <child-theme>/assets/css/style.css
+*/

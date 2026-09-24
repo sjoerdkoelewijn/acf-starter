@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "acf/cards",
+  "title": "Cards",
+  "description": "A grid of cards with an image, a title, text and a link.",
+  "category": "sgwrd-blocks",
+  "icon": "grid-view",
+  "keywords": [
+    "cards",
+    "grid",
+    "tiles"
+  ],
+  "textdomain": "acf-starter",
+  "supports": {
+    "anchor": true,
+    "align": [
+      "wide",
+      "full"
+    ],
+    "alignWide": true,
+    "color": false,
+    "spacing": false,
+    "typography": false,
+    "customClassName": true,
+    "className": true,
+    "html": false,
+    "jsx": false,
+    "multiple": true,
+    "reusable": false
+  },
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    }
+  },
+  "acf": {
+    "mode": "preview",
+    "renderTemplate": "render.php"
+  }
+}

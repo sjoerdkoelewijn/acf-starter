@@ -1,8 +1,6 @@
 <?php
 /**
- * The fallback template.
- *
- * WordPress uses this template when no other template matches.
+ * The search results template.
  *
  * @package ACF_Starter
  */
@@ -14,14 +12,20 @@ get_header();
 
 <main id="main" class="site-main">
 
-	<?php if ( have_posts() ) : ?>
+	<header class="archive-header">
+		<h1 class="archive-header__title">
+			<?php
+			printf(
+				/* translators: %s: the search term */
+				esc_html__( 'Results for %s', 'acf-starter' ),
+				'<span>' . esc_html( get_search_query() ) . '</span>'
+			);
+			?>
+		</h1>
+		<?php get_search_form(); ?>
+	</header>
 
-		<?php if ( ! is_front_page() ) : ?>
-			<header class="archive-header">
-				<h1 class="archive-header__title"><?php echo esc_html( get_the_archive_title() ); ?></h1>
-				<?php the_archive_description( '<div class="archive-header__description">', '</div>' ); ?>
-			</header>
-		<?php endif; ?>
+	<?php if ( have_posts() ) : ?>
 
 		<div class="post-list">
 			<?php

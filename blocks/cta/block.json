@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "acf/cta",
+  "title": "Call to action",
+  "description": "One heading, one line of text and one or two buttons.",
+  "category": "sgwrd-blocks",
+  "icon": "megaphone",
+  "keywords": [
+    "cta",
+    "action",
+    "banner"
+  ],
+  "textdomain": "acf-starter",
+  "supports": {
+    "anchor": true,
+    "align": [
+      "wide",
+      "full"
+    ],
+    "alignWide": true,
+    "color": false,
+    "spacing": false,
+    "typography": false,
+    "customClassName": true,
+    "className": true,
+    "html": false,
+    "jsx": false,
+    "multiple": true,
+    "reusable": false
+  },
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    }
+  },
+  "acf": {
+    "mode": "preview",
+    "renderTemplate": "render.php"
+  }
+}

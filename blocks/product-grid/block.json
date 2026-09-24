@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "acf/product-grid",
+  "title": "Product grid",
+  "description": "A grid of WooCommerce products. Needs WooCommerce.",
+  "category": "sgwrd-blocks",
+  "icon": "cart",
+  "keywords": [
+    "products",
+    "shop",
+    "woocommerce"
+  ],
+  "textdomain": "acf-starter",
+  "supports": {
+    "anchor": true,
+    "align": [
+      "wide",
+      "full"
+    ],
+    "alignWide": true,
+    "color": false,
+    "spacing": false,
+    "typography": false,
+    "customClassName": true,
+    "className": true,
+    "html": false,
+    "jsx": false,
+    "multiple": true,
+    "reusable": false
+  },
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "wide"
+    }
+  },
+  "acf": {
+    "mode": "preview",
+    "renderTemplate": "render.php"
+  }
+}

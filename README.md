@@ -1,0 +1,273 @@
+# ACF Starter
+
+A minimal classic WordPress starter theme for **Advanced Custom Fields Pro** and
+**WooCommerce**.
+
+The theme gives you structure. It does not give you a design. Put the design in
+a child theme, or in the CSS of this theme when it is the only theme on the
+project. The backend stays small on purpose: there is no colour picker, no font
+menu and no page builder. Those choices belong in the code.
+
+---
+
+## Requirements
+
+| Item | Version |
+| --- | --- |
+| WordPress | 6.5 or higher |
+| PHP | 8.0 or higher |
+| Advanced Custom Fields **Pro** | 6.0 or higher |
+| WooCommerce | 8.0 or higher (optional) |
+
+There is no build step. The CSS and the JavaScript are plain files. You edit
+them and you reload the page.
+
+---
+
+## What the theme does
+
+* **Classic templates.** `header.php`, `footer.php` and the other PHP templates.
+  There is no site editor, so a client cannot break the layout.
+* **A locked editor.** `theme.json` turns off the colour, font, spacing and
+  border controls. Only a small list of blocks is available.
+* **ACF blocks from a folder.** Add a folder in `/blocks` with a `block.json`
+  and a `render.php`, and the block is there. You register nothing by hand.
+* **Field groups in git.** Every field group is a JSON file in `/acf-json`.
+* **WooCommerce with two template overrides only.** The rest is hooks and CSS,
+  so a WooCommerce update cannot break the checkout.
+* **A small admin.** No dashboard widgets, no file editor, no block widgets.
+
+---
+
+## Folder structure
+
+```
+acf-starter/
+├── acf-json/                ACF field groups. This folder is the source of truth.
+├── assets/
+│   ├── css/
+│   │   ├── style.css        The front end.
+│   │   ├── woocommerce.css  The shop.
+│   │   ├── editor.css       The block editor canvas.
+│   │   └── admin.css        The WordPress admin.
+│   └── js/
+│       └── theme.js         The menu button and the scroll bar width.
+├── blocks/                  One folder for each ACF block.
+│   └── <slug>/
+│       ├── block.json       The block definition.
+│       └── render.php       The block markup.
+├── functions/               One file for each concern. See the table below.
+├── template-parts/          Small pieces that the templates share.
+├── woocommerce/             The two WooCommerce template overrides.
+├── functions.php            Loads the files in /functions. No logic here.
+├── theme.json               The editor settings and the design tokens.
+└── style.css                The theme header. It holds no styles.
+```
+
+### The files in /functions
+
+| File | What it does |
+| --- | --- |
+| `constants.php` | Paths, the version and the cache busting helper. |
+| `setup.php` | Theme support, menus, image sizes, the footer widget area. |
+| `assets.php` | Loads the styles and the scripts. |
+| `cleanup.php` | Removes the default WordPress output the theme does not use. |
+| `editor.php` | The block allow list, the block category and the block styles. |
+| `admin.php` | Makes the WordPress admin smaller. |
+| `acf.php` | ACF JSON sync, the block loader and the options page. |
+| `template-tags.php` | Small helpers for the templates and the blocks. |
+| `shortcodes.php` | `[year]` and `[site_name]`. |
+| `woocommerce.php` | The shop. The file stops at the top when WooCommerce is off. |
+
+---
+
+## The block allow list
+
+The editor shows these blocks and nothing else:
+
+**Text** — paragraph, heading, list, quote, separator, table
+**Layout** — group, columns, buttons, spacer
+**Theme blocks** — every block in `/blocks`
+
+To change the list, add a filter in the child theme. Do not edit
+`functions/editor.php`.
+
+```php
+add_filter( 'sgwrd_allowed_blocks', function ( $blocks ) {
+	$blocks[] = 'core/image';
+	$blocks[] = 'core/embed';
+
+	return $blocks;
+} );
+```
+
+On the WooCommerce cart, checkout, account and shop pages the theme allows
+every block. Those pages are built from WooCommerce blocks, and the list of
+inner blocks changes with each WooCommerce release.
+
+---
+
+## The theme blocks
+
+| Block | Slug | What it is for |
+| --- | --- | --- |
+| Hero | `acf/hero` | The introduction at the top of a page. |
+| Content and image | `acf/content-image` | Text next to an image. |
+| Selling points | `acf/usp` | A row of reasons to buy. |
+| Call to action | `acf/cta` | One heading, one line, one or two buttons. |
+| Cards | `acf/cards` | A grid of cards with an image and a link. |
+| Contact | `acf/contact` | Contact details next to a form shortcode. |
+| Recent posts | `acf/recent-posts` | The newest posts. |
+| Product grid | `acf/product-grid` | WooCommerce products in a grid. |
+
+### How to add a block
+
+1. Make the folder `blocks/my-block/`.
+2. Add `block.json`. Copy one from another block and change the name, the title
+   and the icon. Keep `"category": "sgwrd-blocks"`.
+3. Add `render.php`. Start it with
+   `<section <?php echo sgwrd_block_attributes( $block, 'my-block' ); ?>>`.
+4. Turn on `WP_DEBUG`, open **Custom Fields → Field Groups**, and make a group
+   with the location rule **Block is equal to My Block**. ACF writes the JSON
+   file into `/acf-json` for you.
+5. Add the CSS in `assets/css/style.css`.
+
+The block is now in the editor. You do not register it anywhere.
+
+---
+
+## Field groups and ACF
+
+The ACF admin menu is visible only when `WP_DEBUG` is `true`. On a live site the
+menu is hidden, and the field groups come from the JSON files in `/acf-json`.
+That keeps the field groups in git, and it stops anyone from changing a field
+group on production.
+
+To open the ACF menu on a site where `WP_DEBUG` is off:
+
+```php
+add_filter( 'sgwrd_acf_show_admin', '__return_true' );
+```
+
+### The theme settings page
+
+There is one options page: **Theme settings**. It holds the company details,
+the social links and three short shop notices. Read a value like this:
+
+```php
+echo esc_html( sgwrd_option( 'company_name' ) );
+```
+
+Keep this page for content. A colour, a font or a spacing value does not belong
+on it.
+
+---
+
+## WooCommerce
+
+The theme overrides two templates:
+
+| File | Why |
+| --- | --- |
+| `woocommerce/content-product.php` | The product card needs a media wrapper and a badge wrapper. |
+| `woocommerce/cart/mini-cart.php` | The mini cart needs its own class names. |
+
+Both files keep every WooCommerce hook and filter, so plugins keep working.
+
+The cart page, the checkout page and the account page use the WooCommerce
+templates without a change. The theme gives them a layout with CSS only. A
+WooCommerce update can therefore never break the checkout.
+
+The theme removes three WooCommerce stylesheets and loads
+`assets/css/woocommerce.css` instead. To go back to the WooCommerce design:
+
+```php
+add_filter( 'sgwrd_remove_woocommerce_styles', '__return_false' );
+```
+
+The block stylesheet `wc-blocks-style` stays. The block cart and the block
+checkout need it.
+
+---
+
+## Design tokens
+
+Every colour, space and size is a custom property. `theme.json` makes the
+WordPress variables. `assets/css/style.css` gives them a short name.
+
+| Token | Source in theme.json |
+| --- | --- |
+| `--c-base`, `--c-text`, `--c-muted`, `--c-surface`, `--c-line`, `--c-accent`, `--c-sale` | `settings.color.palette` |
+| `--s-1` to `--s-5` | `settings.spacing.spacingSizes` |
+| `--w-content`, `--w-wide` | `settings.layout` |
+| `--radius`, `--radius-lg`, `--radius-pill`, `--transition`, `--header-height`, `--grid-min` | `settings.custom` |
+
+This is a classic theme, so the page gutter comes from the templates
+(`.site-main`, `.site-header__inner`, `.site-footer__inner`) and not from
+`theme.json`. `useRootPaddingAwareAlignments` is therefore `false`. Turn it on
+only if you also remove `padding-inline` from those three rules, or the gutter
+is applied twice.
+
+To change the whole look, set new values in the child theme:
+
+```css
+:root {
+	--c-accent: #1d4ed8;
+	--c-surface: #f1f5f9;
+	--radius: 0;
+	--radius-lg: 0;
+	--grid-min: 18rem;
+}
+```
+
+---
+
+## The child theme
+
+Make a folder next to this one, for example `acf-starter-child`.
+
+**`style.css`**
+
+```css
+/*
+Theme Name:  ACF Starter Child
+Template:    acf-starter
+Version:     1.0.0
+Text Domain: acf-starter-child
+*/
+```
+
+**`functions.php`**
+
+```php
+<?php
+defined( 'ABSPATH' ) || exit;
+// The parent theme loads assets/css/style.css from the child theme by itself.
+```
+
+Then add **`assets/css/style.css`** with your design. The parent theme finds it
+and loads it after its own stylesheet, with a cache busting version.
+
+A child theme may also hold:
+
+* `blocks/<slug>/` — the parent registers child blocks in the same way.
+* `acf-json/` — the parent loads child field groups too.
+* `woocommerce/` — WooCommerce reads the child theme first.
+
+---
+
+## Things to do on a new project
+
+1. Rename the theme in `style.css`, and rename the folder to match the text
+   domain.
+2. Set the palette and the widths in `theme.json`.
+3. Set `define( 'DISALLOW_FILE_EDIT', true );` in `wp-config.php`.
+4. Turn `WP_DEBUG` on while you build, and off when you go live.
+5. Delete the blocks you do not need. Delete the folder and the matching file
+   in `/acf-json`.
+
+---
+
+## Licence
+
+GPL-2.0-or-later.

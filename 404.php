@@ -1,13 +1,34 @@
-<?php header("HTTP/1.0 404 Not Found"); ?>
+<?php
+/**
+ * The template for a page that does not exist.
+ *
+ * @package ACF_Starter
+ */
 
-<?php get_header(); ?>
+defined( 'ABSPATH' ) || exit;
 
-    <main class="content">
+get_header();
+?>
 
-        <h1>
-            <?php esc_html_e( '404 - Not Found', 'ACFSTARTER' ); ?>
-        </h1>
-        
-    </main>    
+<main id="main" class="site-main site-main--narrow">
 
-<?php get_footer(); ?>
+	<div class="message">
+		<h1 class="message__title"><?php esc_html_e( 'Page not found', 'acf-starter' ); ?></h1>
+
+		<p class="message__text">
+			<?php esc_html_e( 'This page is not here. Use the search or go back to the shop.', 'acf-starter' ); ?>
+		</p>
+
+		<?php get_search_form(); ?>
+
+		<p class="message__actions">
+			<a class="button button--primary" href="<?php echo esc_url( sgwrd_shop_url() ); ?>">
+				<?php esc_html_e( 'Continue shopping', 'acf-starter' ); ?>
+			</a>
+		</p>
+	</div>
+
+</main>
+
+<?php
+get_footer();

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schemas.wp.org/trunk/block.json",
+  "apiVersion": 3,
+  "name": "acf/hero",
+  "title": "Hero",
+  "description": "A full width introduction with a heading, text, buttons and an image.",
+  "category": "sgwrd-blocks",
+  "icon": "cover-image",
+  "keywords": [
+    "hero",
+    "banner",
+    "intro"
+  ],
+  "textdomain": "acf-starter",
+  "supports": {
+    "anchor": true,
+    "align": [
+      "wide",
+      "full"
+    ],
+    "alignWide": true,
+    "color": false,
+    "spacing": false,
+    "typography": false,
+    "customClassName": true,
+    "className": true,
+    "html": false,
+    "jsx": false,
+    "multiple": true,
+    "reusable": false
+  },
+  "attributes": {
+    "align": {
+      "type": "string",
+      "default": "full"
+    }
+  },
+  "acf": {
+    "mode": "preview",
+    "renderTemplate": "render.php"
+  }
+}
