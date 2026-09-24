@@ -95,13 +95,6 @@ p, figure, blockquote, dl, dd {
 	margin-block: 0;
 }
 
-ul[class],
-ol[class] {
-	margin-block: 0;
-	padding-inline-start: 0;
-	list-style: none;
-}
-
 img,
 picture,
 svg,
@@ -248,6 +241,19 @@ td {
 /* ------------------------------------------------------------------------- *
  * 6. Header
  * ------------------------------------------------------------------------- */
+
+.announcement-bar {
+	padding: 0.55rem var(--w-gutter);
+	background: var(--c-text);
+	color: var(--c-base);
+	font-size: 0.8125rem;
+	text-align: center;
+}
+
+.announcement-bar__link {
+	color: inherit;
+	text-underline-offset: 0.2em;
+}
 
 .site-header {
 	position: sticky;
@@ -763,21 +769,338 @@ label {
 	color: var(--c-muted);
 }
 
-.hero__media img {
+/* The side by side layout. */
+
+.hero--side .hero__media img {
 	width: 100%;
 	border-radius: var(--radius-lg);
 	object-fit: cover;
 }
 
-.hero--small .hero__media img { aspect-ratio: 21 / 9; }
-.hero--medium .hero__media img { aspect-ratio: 16 / 9; }
-.hero--large .hero__media img { aspect-ratio: 4 / 3; }
+.hero--side.hero--small .hero__media img { aspect-ratio: 21 / 9; }
+.hero--side.hero--medium .hero__media img { aspect-ratio: 16 / 9; }
+.hero--side.hero--large .hero__media img { aspect-ratio: 4 / 3; }
 
 @media (min-width: 48em) {
 
-	.hero:not(.hero--no-image) {
+	.hero--side:not(.hero--no-image) {
 		grid-template-columns: 1fr 1fr;
 	}
+}
+
+/*
+ * The cover layout.
+ *
+ * --hero-overlay comes from the block. It is a number between 0 and 1, and it
+ * sets how dark the layer between the background and the text is.
+ */
+
+.hero--cover {
+	position: relative;
+	isolation: isolate;
+	display: grid;
+	place-items: center;
+	gap: 0;
+	padding: var(--s-5) var(--w-gutter);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	color: #fff;
+	text-align: center;
+}
+
+.hero--cover.alignfull {
+	border-radius: 0;
+}
+
+.hero--cover.hero--small { min-height: 40vh; }
+.hero--cover.hero--medium { min-height: 60vh; }
+.hero--cover.hero--large { min-height: 82vh; }
+
+.hero__background {
+	position: absolute;
+	inset: 0;
+	z-index: -2;
+	background: var(--c-surface);
+}
+
+.hero__background img,
+.hero__video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.hero__video {
+	position: absolute;
+	inset: 0;
+}
+
+/* The dark layer. */
+.hero--cover::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: rgb(0 0 0 / var(--hero-overlay, 0.4));
+}
+
+.hero--cover .hero__body {
+	max-width: 44rem;
+	justify-items: center;
+}
+
+.hero--cover .hero__eyebrow {
+	color: rgb(255 255 255 / 0.8);
+}
+
+.hero--cover .block__actions {
+	justify-content: center;
+}
+
+.hero--cover .button--primary,
+.hero--cover .button:not(.button--outline) {
+	background: #fff;
+	color: var(--c-text);
+}
+
+.hero--cover .button--outline {
+	color: #fff;
+	border-color: rgb(255 255 255 / 0.7);
+}
+
+.hero--cover .button--outline:hover {
+	background: #fff;
+	color: var(--c-text);
+}
+
+.hero--cover .text-link {
+	color: #fff;
+}
+
+/*
+ * A visitor who asked for less motion sees the poster image, not the video.
+ * The poster is already in the markup, under the video.
+ */
+@media (prefers-reduced-motion: reduce) {
+
+	.hero__video {
+		display: none;
+	}
+}
+
+/* The split hero: two cover panels next to each other. */
+
+.hero-split {
+	display: grid;
+	gap: var(--s-1);
+}
+
+@media (min-width: 48em) {
+
+	.hero-split {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+
+.hero-split__panel {
+	position: relative;
+	isolation: isolate;
+	display: grid;
+	place-items: center;
+	padding: var(--s-4) var(--s-3);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	color: #fff;
+	text-align: center;
+}
+
+.hero-split.alignfull .hero-split__panel {
+	border-radius: 0;
+}
+
+.hero-split--small .hero-split__panel { min-height: 30vh; }
+.hero-split--medium .hero-split__panel { min-height: 46vh; }
+.hero-split--large .hero-split__panel { min-height: 64vh; }
+
+.hero-split__background {
+	position: absolute;
+	inset: 0;
+	z-index: -2;
+	background: var(--c-surface);
+}
+
+.hero-split__background img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	transition: transform 600ms ease;
+}
+
+.hero-split__panel:hover .hero-split__background img {
+	transform: scale(1.04);
+}
+
+.hero-split__panel::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: rgb(0 0 0 / var(--hero-overlay, 0.4));
+}
+
+.hero-split__body {
+	display: grid;
+	gap: var(--s-2);
+	justify-items: center;
+	max-width: 30rem;
+}
+
+.hero-split__eyebrow {
+	font-size: var(--wp--preset--font-size--small, 0.875rem);
+	text-transform: uppercase;
+	letter-spacing: 0.1em;
+	color: rgb(255 255 255 / 0.8);
+}
+
+.hero-split__panel .button {
+	background: #fff;
+	color: var(--c-text);
+}
+
+/* FAQ. */
+
+.faq {
+	padding-block: var(--s-4);
+}
+
+.faq--archive {
+	margin-block-start: var(--s-5);
+	border-top: var(--border);
+}
+
+.faq__inner {
+	max-width: var(--w-content);
+	margin-inline: auto;
+}
+
+.faq__heading {
+	margin-block-end: var(--s-3);
+	text-align: center;
+}
+
+.faq__list {
+	border-top: var(--border);
+}
+
+.faq__item {
+	border-bottom: var(--border);
+}
+
+.faq__question {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	padding-block: var(--s-2);
+	cursor: pointer;
+	font-weight: 500;
+	list-style: none;
+}
+
+/* Remove the arrow that the browser adds by itself. */
+.faq__question::-webkit-details-marker {
+	display: none;
+}
+
+.faq__marker {
+	position: relative;
+	flex: 0 0 auto;
+	width: 0.85rem;
+	height: 0.85rem;
+}
+
+.faq__marker::before,
+.faq__marker::after {
+	content: "";
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 0;
+	width: 100%;
+	height: 1.5px;
+	background: currentColor;
+	transition: transform var(--transition);
+}
+
+.faq__marker::after {
+	transform: rotate(90deg);
+}
+
+.faq__item[open] .faq__marker::after {
+	transform: rotate(0deg);
+}
+
+.faq__answer {
+	padding-block: 0 var(--s-3);
+	color: var(--c-muted);
+}
+
+.faq__answer > :first-child {
+	margin-block-start: 0;
+}
+
+/* The banner and intro of a category page. */
+
+.term-header {
+	margin-block-end: var(--s-4);
+	display: grid;
+	gap: var(--s-3);
+}
+
+.term-header--banner {
+	position: relative;
+	isolation: isolate;
+	place-items: center;
+	min-height: 32vh;
+	padding: var(--s-4) var(--s-3);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	color: #fff;
+	text-align: center;
+}
+
+.term-header__media {
+	position: absolute;
+	inset: 0;
+	z-index: -2;
+	background: var(--c-surface);
+}
+
+.term-header__media img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.term-header--banner::after {
+	content: "";
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	background: rgb(0 0 0 / 0.35);
+}
+
+.term-header__body {
+	display: grid;
+	gap: var(--s-2);
+	max-width: 44rem;
+}
+
+.term-header__intro {
+	color: var(--c-muted);
+}
+
+.term-header--banner .term-header__intro {
+	color: rgb(255 255 255 / 0.85);
 }
 
 /* Content and image. */

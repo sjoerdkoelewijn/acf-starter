@@ -30,12 +30,28 @@ $category = get_field( 'product_category' );
 $link     = get_field( 'link' );
 
 $attributes = array(
-	'limit'   => max( 1, min( 24, $count ) ),
-	'columns' => max( 1, min( 6, $columns ) ),
-	'paginate'=> 'false',
+	'limit'    => max( 1, min( 24, $count ) ),
+	'columns'  => max( 1, min( 6, $columns ) ),
+	'paginate' => 'false',
 );
 
 switch ( $source ) {
+	case 'selected':
+		$ids = array_filter( array_map( 'absint', (array) get_field( 'products' ) ) );
+
+		if ( ! $ids ) {
+			if ( $is_preview ) {
+				echo '<p class="block__placeholder">' . esc_html__( 'Product grid: choose the products in the sidebar.', 'acf-starter' ) . '</p>';
+			}
+
+			return;
+		}
+
+		$attributes['ids']     = implode( ',', $ids );
+		$attributes['limit']   = count( $ids );
+		$attributes['orderby'] = 'post__in';
+		break;
+
 	case 'featured':
 		$attributes['visibility'] = 'featured';
 		break;

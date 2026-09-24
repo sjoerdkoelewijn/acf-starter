@@ -114,6 +114,8 @@ inner blocks changes with each WooCommerce release.
 | Block | Slug | What it is for |
 | --- | --- | --- |
 | Hero | `acf/hero` | The introduction at the top of a page. |
+| Split hero | `acf/hero-split` | Two cover panels next to each other. |
+| FAQ | `acf/faq` | Questions and answers that open and close. |
 | Content and image | `acf/content-image` | Text next to an image. |
 | Selling points | `acf/usp` | A row of reasons to buy. |
 | Call to action | `acf/cta` | One heading, one line, one or two buttons. |
@@ -121,6 +123,58 @@ inner blocks changes with each WooCommerce release.
 | Contact | `acf/contact` | Contact details next to a form shortcode. |
 | Recent posts | `acf/recent-posts` | The newest posts. |
 | Product grid | `acf/product-grid` | WooCommerce products in a grid. |
+
+### The hero
+
+The hero has two layouts. **Cover** puts the media behind the text, with a dark
+overlay between the two. **Side by side** puts the image next to the text.
+
+In the cover layout the background is an image or a video:
+
+* The **video** is an MP4 or a WebM file with no sound. It plays by itself, in
+  a loop, with no controls. Keep it under 5 MB.
+* The **image** is the poster. It shows first, on a slow connection, and
+  instead of the video when the visitor asked for less motion
+  (`prefers-reduced-motion`). The theme needs no JavaScript for this.
+* The **overlay** is a slider from 0 to 100. The block writes it to the CSS as
+  the custom property `--hero-overlay`. No colour is ever written into the
+  markup.
+
+The **split hero** works the same way, but with two panels. Each panel has its
+own image, its own overlay, its own title and summary, and one button. The
+panels stack on a telephone.
+
+### The FAQ
+
+One set of fields serves three places, because the field group has four
+location rules:
+
+| Where | How it appears |
+| --- | --- |
+| A page | The `acf/faq` block, full width |
+| A product | An extra **Questions** tab next to Description |
+| A product category | Under the product grid |
+| A blog category | Under the post list |
+
+A product page and a category page are not built from blocks, so a block cannot
+reach them. The fields sit on the product and on the term instead, and
+`functions/woocommerce.php` prints them.
+
+The accordion is a native `<details>` element. The browser opens and closes it,
+so it works with a keyboard and a screen reader, and the theme ships no
+JavaScript for it.
+
+Use `sgwrd_the_faq( $source )` to print the questions anywhere else. Pass
+nothing for a block, a post ID for a product, or a `WP_Term` for a category.
+
+### The product grid
+
+Six sources: newest, featured, on sale, best selling, from a category, and
+**hand picked**. Hand picked uses a relationship field, and the grid keeps the
+order you drag the products into.
+
+The block builds a WooCommerce `[products]` shortcode from the fields, so the
+products use the same card, the same hooks and the same CSS as the shop pages.
 
 ### How to add a block
 
@@ -198,10 +252,20 @@ add_filter( 'acf/settings/show_admin', '__return_false' );
 Be careful with this on a site where you also want the automatic sync: the sync
 keeps working, but nobody can see or edit the field groups any more.
 
+### Fields that are not blocks
+
+Two field groups sit outside the block editor:
+
+| Group | Where | What it does |
+| --- | --- | --- |
+| Category header | Product category, blog category | A banner image and an intro text above the list. The title of the category header replaces the normal one, so it is never printed twice. |
+| FAQ | Product, product category, blog category | See **The FAQ** above. |
+
 ### The theme settings page
 
-There is one options page: **Theme settings**. It holds the company details,
-the social links and three short shop notices. Read a value like this:
+There is one options page: **Theme settings**. It has four tabs: the company
+details, the social links, the notice bar above the header, and three short
+shop notices. Read a value like this:
 
 ```php
 echo esc_html( sgwrd_option( 'company_name' ) );

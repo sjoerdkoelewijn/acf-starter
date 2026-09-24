@@ -176,6 +176,105 @@ add_filter( 'woocommerce_output_related_products_args', 'sgwrd_related_products_
 
 /*
  * ---------------------------------------------------------------------------
+ * ACF content on the shop pages
+ * ---------------------------------------------------------------------------
+ *
+ * A product archive and a product page are not built from blocks, so a block
+ * cannot reach them. The fields sit on the term and on the product itself, and
+ * these hooks print them.
+ */
+
+/**
+ * Print the banner and the intro of a product category.
+ *
+ * The hook runs inside the theme wrapper, above the WooCommerce page title.
+ * The title of the category header replaces the WooCommerce one, so it is
+ * never printed twice.
+ */
+function sgwrd_shop_term_header() {
+
+	if ( ! is_product_taxonomy() ) {
+		return;
+	}
+
+	sgwrd_the_term_header();
+}
+add_action( 'woocommerce_before_main_content', 'sgwrd_shop_term_header', 15 );
+
+/**
+ * Hide the WooCommerce page title when the category header printed one.
+ *
+ * @param bool $show Current value.
+ * @return bool
+ */
+function sgwrd_shop_page_title( $show ) {
+
+	return sgwrd_has_term_header() ? false : $show;
+}
+add_filter( 'woocommerce_show_page_title', 'sgwrd_shop_page_title' );
+
+/**
+ * Print the questions and answers of a product category, under the grid.
+ */
+function sgwrd_shop_term_faq() {
+
+	if ( ! is_product_taxonomy() ) {
+		return;
+	}
+
+	$term = get_queried_object();
+
+	if ( ! $term instanceof WP_Term || ! sgwrd_has_faq( $term ) ) {
+		return;
+	}
+
+	echo '<section class="faq faq--archive">';
+	sgwrd_the_faq( $term );
+	echo '</section>';
+}
+add_action( 'woocommerce_after_main_content', 'sgwrd_shop_term_faq', 5 );
+
+/**
+ * Add the questions and answers of a product as an extra tab.
+ *
+ * A tab keeps the product page short, and it puts the answers where a buyer
+ * looks for them.
+ *
+ * @param array $tabs The product tabs.
+ * @return array
+ */
+function sgwrd_product_faq_tab( $tabs ) {
+
+	global $post;
+
+	if ( ! $post || ! sgwrd_has_faq( $post->ID ) ) {
+		return $tabs;
+	}
+
+	$tabs['sgwrd_faq'] = array(
+		'title'    => __( 'Questions', 'acf-starter' ),
+		'priority' => 25,
+		'callback' => 'sgwrd_product_faq_tab_content',
+	);
+
+	return $tabs;
+}
+add_filter( 'woocommerce_product_tabs', 'sgwrd_product_faq_tab' );
+
+/**
+ * Print the content of the product questions tab.
+ */
+function sgwrd_product_faq_tab_content() {
+
+	global $post;
+
+	echo '<div class="faq faq--product">';
+	sgwrd_the_faq( $post->ID );
+	echo '</div>';
+}
+
+/*
+ * ---------------------------------------------------------------------------
  * The header cart
  * ---------------------------------------------------------------------------
  */

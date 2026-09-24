@@ -232,6 +232,95 @@
             ]
         },
         {
+            "key": "field_sgwrd_set_tab_bar",
+            "label": "Notice bar",
+            "name": "",
+            "aria-label": "",
+            "type": "tab",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "placement": "top",
+            "endpoint": 0
+        },
+        {
+            "key": "field_sgwrd_set_bar_active",
+            "label": "Show the bar",
+            "name": "bar_active",
+            "aria-label": "",
+            "type": "true_false",
+            "instructions": "A single line above the header, on every page.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "message": "",
+            "default_value": 0,
+            "ui": 1,
+            "ui_on_text": "",
+            "ui_off_text": ""
+        },
+        {
+            "key": "field_sgwrd_set_bar_text",
+            "label": "Text",
+            "name": "bar_text",
+            "aria-label": "",
+            "type": "text",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_sgwrd_set_bar_active",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": "",
+            "maxlength": "",
+            "placeholder": "",
+            "prepend": "",
+            "append": ""
+        },
+        {
+            "key": "field_sgwrd_set_bar_link",
+            "label": "Link",
+            "name": "bar_link",
+            "aria-label": "",
+            "type": "link",
+            "instructions": "Optional. The whole bar becomes a link.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_sgwrd_set_bar_active",
+                        "operator": "==",
+                        "value": "1"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "return_format": "array"
+        },
+        {
             "key": "field_sgwrd_set_tab_shop",
             "label": "Shop",
             "name": "",
@@ -327,5 +416,5 @@
     "active": true,
     "description": "Content that belongs to the client. Design settings do not go here.",
     "show_in_rest": 0,
-    "modified": 1758672000
+    "modified": 1790208000
 }

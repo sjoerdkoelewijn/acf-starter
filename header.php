@@ -19,6 +19,8 @@ defined( 'ABSPATH' ) || exit;
 <body <?php body_class(); ?>>
 <?php wp_body_open(); ?>
 
+<?php get_template_part( 'template-parts/announcement-bar' ); ?>
+
 <a class="skip-link" href="#main"><?php esc_html_e( 'Skip to content', 'acf-starter' ); ?></a>
 
 <header class="site-header" data-sticky>

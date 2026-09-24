@@ -23,12 +23,19 @@ function sgwrd_has_woocommerce() {
  * The function gives every block the same set of classes and a stable ID, so
  * the CSS in a child theme has something to hold on to.
  *
+ * A block that has a value the CSS needs, such as a number of columns or an
+ * overlay strength, passes it in $styles. The value becomes a CSS custom
+ * property on the block, and the stylesheet reads it with var(). No block
+ * prints a colour, a size or any other design value of its own.
+ *
  * @param array  $block   The ACF block array.
  * @param string $slug    Block slug without the 'acf/' prefix. Example: 'hero'.
  * @param array  $classes Extra CSS classes.
+ * @param array  $styles  CSS custom properties, as name => value. The name may
+ *                        be given with or without the two leading dashes.
  * @return string Escaped attribute string, ready to print inside a tag.
  */
-function sgwrd_block_attributes( $block, $slug, $classes = array() ) {
+function sgwrd_block_attributes( $block, $slug, $classes = array(), $styles = array() ) {
 
 	$anchor = ! empty( $block['anchor'] ) ? $block['anchor'] : 'block-' . str_replace( 'block_', '', $block['id'] );
 
@@ -47,11 +54,31 @@ function sgwrd_block_attributes( $block, $slug, $classes = array() ) {
 
 	$class_list = array_filter( array_unique( $class_list ) );
 
-	return sprintf(
+	$attributes = sprintf(
 		'id="%s" class="%s"',
 		esc_attr( $anchor ),
 		esc_attr( implode( ' ', $class_list ) )
 	);
+
+	$declarations = array();
+
+	foreach ( (array) $styles as $property => $value ) {
+		// Accept only a safe property name, and always write it as a custom property.
+		$property = '--' . preg_replace( '/[^a-z0-9-]/', '', strtolower( ltrim( (string) $property, '-' ) ) );
+		$value    = trim( (string) $value );
+
+		if ( '--' === $property || '' === $value ) {
+			continue;
+		}
+
+		$declarations[] = $property . ':' . $value;
+	}
+
+	if ( $declarations ) {
+		$attributes .= sprintf( ' style="%s"', esc_attr( implode( ';', $declarations ) ) );
+	}
+
+	return $attributes;
 }
 
 /**
@@ -202,3 +229,90 @@ function sgwrd_shop_url() {
 
 	return home_url( '/' );
 }
+
+/**
+ * Read a field from a taxonomy term.
+ *
+ * @param string       $name Field name.
+ * @param WP_Term|null $term The term. The queried term is used when this is empty.
+ * @return mixed Null when there is no term or no ACF.
+ */
+function sgwrd_term_field( $name, $term = null ) {
+
+	if ( ! function_exists( 'get_field' ) ) {
+		return null;
+	}
+
+	if ( null === $term ) {
+		$term = get_queried_object();
+	}
+
+	if ( ! $term instanceof WP_Term ) {
+		return null;
+	}
+
+	return get_field( $name, $term );
+}
+
+/**
+ * Check if the current category has a banner or an intro.
+ *
+ * A template uses this to decide between the category header and the plain
+ * archive header, so the title is never printed twice.
+ *
+ * @return bool
+ */
+function sgwrd_has_term_header() {
+
+	if ( ! is_category() && ! is_tag() && ! is_tax() ) {
+		return false;
+	}
+
+	return (bool) sgwrd_term_field( 'banner' ) || (bool) sgwrd_term_field( 'intro' );
+}
+
+/**
+ * Print the banner and the intro of a category page.
+ *
+ * The output comes from template-parts/term-header.php, so a child theme can
+ * replace it. The function prints nothing on a page that is not a term archive.
+ *
+ * @return void
+ */
+function sgwrd_the_term_header() {
+
+	if ( ! is_category() && ! is_tag() && ! is_tax() ) {
+		return;
+	}
+
+	get_template_part( 'template-parts/term-header' );
+}
+
+/**
+ * Print the questions and answers.
+ *
+ * The same fields live in three places, so this function takes the context:
+ *
+ *   sgwrd_the_faq();                  the FAQ block on a page
+ *   sgwrd_the_faq( $product_id );     a product
+ *   sgwrd_the_faq( $term );           a category
+ *
+ * @param mixed $source The ACF context. False means the current block.
+ * @return void
+ */
+function sgwrd_the_faq( $source = false ) {
+
+	get_template_part( 'template-parts/faq', null, array( 'source' => $source ) );
+}
+
+/**
+ * Check if a context has questions to show.
+ *
+ * @param mixed $source The ACF context.
+ * @return bool
+ */
+function sgwrd_has_faq( $source = false ) {
+
+	return function_exists( 'have_rows' ) && (bool) have_rows( 'faq_items', $source );
+}
+

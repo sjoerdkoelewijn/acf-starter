@@ -1,35 +1,29 @@
 /**
  * ACF Starter - the block editor canvas.
  *
- * The file makes the editor look like the front end. Keep it small. Most of
- * the design comes from theme.json, which the editor already reads.
+ * The editor also loads assets/css/style.css, so a block looks the same in the
+ * editor as on the front end. This file holds the few rules that belong to the
+ * editor only.
+ *
+ * Note on selectors: WordPress rewrites every selector in an editor stylesheet
+ * so it applies inside the editor canvas. It replaces `:root`, `html` and
+ * `body` with the canvas itself, and it puts the canvas in front of every
+ * other selector. So write `:root`, never `.editor-styles-wrapper`: that one
+ * would become `.editor-styles-wrapper .editor-styles-wrapper` and match
+ * nothing.
  */
 
-.editor-styles-wrapper {
-	--c-base: var(--wp--preset--color--base, #fff);
-	--c-text: var(--wp--preset--color--contrast, #111);
-	--c-muted: var(--wp--preset--color--muted, #6b6b6b);
-	--c-surface: var(--wp--preset--color--surface, #f5f5f4);
-	--c-line: var(--wp--preset--color--line, #e4e4e2);
-	--c-accent: var(--wp--preset--color--accent, #111);
-	--c-sale: var(--wp--preset--color--sale, #b42318);
-
-	--s-1: var(--wp--preset--spacing--20, 0.5rem);
-	--s-2: var(--wp--preset--spacing--30, 1rem);
-	--s-3: var(--wp--preset--spacing--40, 1.5rem);
-	--s-4: var(--wp--preset--spacing--50, 3rem);
-	--s-5: var(--wp--preset--spacing--60, 5rem);
-
-	--radius: var(--wp--custom--radius--md, 4px);
-	--radius-lg: var(--wp--custom--radius--lg, 10px);
-	--radius-pill: var(--wp--custom--radius--pill, 999px);
-	--border: 1px solid var(--c-line);
-	--transition: var(--wp--custom--transition, 160ms ease);
-	--grid-min: var(--wp--custom--grid--min, 15rem);
-	--scrollbar-width: 0px;
+:root {
+	/*
+	 * The editor canvas is not the page. It has no header, no footer and no
+	 * viewport of its own, so undo the rules that only make sense on the front
+	 * end. style.css sets these on the body.
+	 */
+	display: block;
+	min-height: 0;
 }
 
-/* An ACF block placeholder, so an empty block is still visible. */
+/* An ACF block placeholder, so an empty block stays visible. */
 .block__placeholder {
 	padding: var(--s-3);
 	border: 1px dashed var(--c-line);
@@ -39,33 +33,22 @@
 	text-align: center;
 }
 
-/* The editor has no real page width, so an ACF block gets a sensible one. */
-.editor-styles-wrapper .block {
+/* Give each block room, because the editor has no page layout. */
+.block {
 	margin-block: var(--s-3);
 }
 
-/* Give the editor the same block styles as the front end. */
-.editor-styles-wrapper .is-style-surface {
-	background: var(--c-surface);
-	padding: var(--s-4);
-	border-radius: var(--radius-lg);
+/*
+ * A cover hero uses the height of the window. The editor canvas is shorter
+ * than the window, so cap it and keep the block list readable.
+ */
+.hero--cover,
+.hero-split__panel,
+.term-header--banner {
+	min-height: 22rem;
 }
 
-.editor-styles-wrapper .is-style-bordered {
-	border: var(--border);
-	padding: var(--s-4);
-	border-radius: var(--radius-lg);
-}
-
-.editor-styles-wrapper .is-style-eyebrow {
-	font-size: 0.875rem;
-	font-weight: 500;
-	text-transform: uppercase;
-	letter-spacing: 0.1em;
-	color: var(--c-muted);
-}
-
-.editor-styles-wrapper .is-style-plain {
-	list-style: none;
-	padding-inline-start: 0;
+/* The editor cannot play a background video. Show the poster instead. */
+.hero__video {
+	display: none;
 }

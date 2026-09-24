@@ -8,7 +8,7 @@
             "name": "eyebrow",
             "aria-label": "",
             "type": "text",
-            "instructions": "A short line above the heading.",
+            "instructions": "A short line above the title.",
             "required": 0,
             "conditional_logic": 0,
             "wrapper": {
@@ -24,7 +24,7 @@
         },
         {
             "key": "field_sgwrd_hero_heading",
-            "label": "Heading",
+            "label": "Title",
             "name": "heading",
             "aria-label": "",
             "type": "text",
@@ -44,7 +44,7 @@
         },
         {
             "key": "field_sgwrd_hero_text",
-            "label": "Text",
+            "label": "Summary",
             "name": "text",
             "aria-label": "",
             "type": "wysiwyg",
@@ -63,63 +63,8 @@
             "delay": 0
         },
         {
-            "key": "field_sgwrd_hero_image",
-            "label": "Image",
-            "name": "image",
-            "aria-label": "",
-            "type": "image",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "return_format": "array",
-            "library": "all",
-            "min_width": "",
-            "min_height": "",
-            "min_size": "",
-            "max_width": "",
-            "max_height": "",
-            "max_size": "",
-            "mime_types": "",
-            "preview_size": "large"
-        },
-        {
-            "key": "field_sgwrd_hero_size",
-            "label": "Height",
-            "name": "size",
-            "aria-label": "",
-            "type": "button_group",
-            "instructions": "",
-            "required": 0,
-            "conditional_logic": 0,
-            "wrapper": {
-                "width": "",
-                "class": "",
-                "id": ""
-            },
-            "choices": {
-                "small": "Small",
-                "medium": "Medium",
-                "large": "Large"
-            },
-            "default_value": "medium",
-            "return_format": "value",
-            "allow_null": 0,
-            "other_choice": 0,
-            "layout": "horizontal",
-            "save_other_choice": 0,
-            "multiple": 0,
-            "ui": 0,
-            "ajax": 0,
-            "placeholder": ""
-        },
-        {
             "key": "field_sgwrd_hero_buttons",
-            "label": "Buttons",
+            "label": "Call to action",
             "name": "buttons",
             "aria-label": "",
             "type": "repeater",
@@ -188,6 +133,189 @@
                     "parent_repeater": "field_sgwrd_hero_buttons"
                 }
             ]
+        },
+        {
+            "key": "field_sgwrd_hero_layout",
+            "label": "Layout",
+            "name": "layout",
+            "aria-label": "",
+            "type": "button_group",
+            "instructions": "Cover puts the media behind the text. Side by side puts the image next to it.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "cover": "Cover (text on the background)",
+                "side": "Side by side (text next to the image)"
+            },
+            "default_value": "cover",
+            "return_format": "value",
+            "allow_null": 0,
+            "other_choice": 0,
+            "layout": "vertical",
+            "save_other_choice": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0,
+            "placeholder": ""
+        },
+        {
+            "key": "field_sgwrd_hero_media",
+            "label": "Background",
+            "name": "background_media",
+            "aria-label": "",
+            "type": "button_group",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_sgwrd_hero_layout",
+                        "operator": "==",
+                        "value": "cover"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "image": "Image",
+                "video": "Video"
+            },
+            "default_value": "image",
+            "return_format": "value",
+            "allow_null": 0,
+            "other_choice": 0,
+            "layout": "horizontal",
+            "save_other_choice": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0,
+            "placeholder": ""
+        },
+        {
+            "key": "field_sgwrd_hero_image",
+            "label": "Image",
+            "name": "image",
+            "aria-label": "",
+            "type": "image",
+            "instructions": "In the cover layout this is the background. With a video it is the poster: the frame that shows first, on a slow connection, and when the visitor asked for less motion.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "return_format": "array",
+            "library": "all",
+            "min_width": "",
+            "min_height": "",
+            "min_size": "",
+            "max_width": "",
+            "max_height": "",
+            "max_size": "",
+            "mime_types": "",
+            "preview_size": "large"
+        },
+        {
+            "key": "field_sgwrd_hero_video",
+            "label": "Video",
+            "name": "video",
+            "aria-label": "",
+            "type": "file",
+            "instructions": "An MP4 or WebM file with no sound. Keep it under 5 MB. The video plays by itself, in a loop, with no controls.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_sgwrd_hero_layout",
+                        "operator": "==",
+                        "value": "cover"
+                    },
+                    {
+                        "field": "field_sgwrd_hero_media",
+                        "operator": "==",
+                        "value": "video"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "return_format": "array",
+            "library": "all",
+            "min_size": "",
+            "max_size": "",
+            "mime_types": "mp4,webm"
+        },
+        {
+            "key": "field_sgwrd_hero_overlay",
+            "label": "Overlay",
+            "name": "overlay_opacity",
+            "aria-label": "",
+            "type": "range",
+            "instructions": "A dark layer between the background and the text. Raise it when the text is hard to read.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_sgwrd_hero_layout",
+                        "operator": "==",
+                        "value": "cover"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "default_value": 40,
+            "min": 0,
+            "max": 100,
+            "step": 5,
+            "prepend": "",
+            "append": "%"
+        },
+        {
+            "key": "field_sgwrd_hero_size",
+            "label": "Height",
+            "name": "size",
+            "aria-label": "",
+            "type": "button_group",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "small": "Small",
+                "medium": "Medium",
+                "large": "Large"
+            },
+            "default_value": "medium",
+            "return_format": "value",
+            "allow_null": 0,
+            "other_choice": 0,
+            "layout": "horizontal",
+            "save_other_choice": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0,
+            "placeholder": ""
         }
     ],
     "location": [
@@ -208,5 +336,5 @@
     "active": true,
     "description": "The introduction at the top of a page.",
     "show_in_rest": 0,
-    "modified": 1758672000
+    "modified": 1790208000
 }

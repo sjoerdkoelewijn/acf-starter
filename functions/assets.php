@@ -63,14 +63,26 @@ function sgwrd_enqueue_assets() {
 add_action( 'wp_enqueue_scripts', 'sgwrd_enqueue_assets' );
 
 /**
- * Load the editor stylesheet.
+ * Load the editor stylesheets.
  *
- * add_editor_style() needs a path that is relative to the theme folder.
- * The version query keeps the editor from caching an old file.
+ * The editor gets the front end stylesheet as well as the editor one. An ACF
+ * block runs in preview mode, so the editor shows the real markup. Without the
+ * front end CSS that markup would have no design at all.
+ *
+ * WordPress rewrites the selectors so the rules stay inside the editor canvas.
+ * See the note at the top of assets/css/editor.css.
+ *
+ * add_editor_style() needs a path that is relative to the theme folder. The
+ * version query keeps the editor from caching an old file.
  */
 function sgwrd_editor_styles() {
 
-	add_editor_style( 'assets/css/editor.css?ver=' . sgwrd_asset_version( 'assets/css/editor.css' ) );
+	add_editor_style(
+		array(
+			'assets/css/style.css?ver=' . sgwrd_asset_version( 'assets/css/style.css' ),
+			'assets/css/editor.css?ver=' . sgwrd_asset_version( 'assets/css/editor.css' ),
+		)
+	);
 }
 add_action( 'after_setup_theme', 'sgwrd_editor_styles', 20 );
 

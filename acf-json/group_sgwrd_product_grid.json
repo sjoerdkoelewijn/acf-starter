@@ -41,7 +41,8 @@
                 "featured": "Featured",
                 "sale": "On sale",
                 "best-selling": "Best selling",
-                "category": "From a category"
+                "category": "From a category",
+                "selected": "Hand picked"
             },
             "default_value": "recent",
             "return_format": "value",
@@ -88,6 +89,46 @@
             "bidirectional_target": []
         },
         {
+            "key": "field_sgwrd_pg_products",
+            "label": "Products",
+            "name": "products",
+            "aria-label": "",
+            "type": "relationship",
+            "instructions": "Drag to change the order. The grid keeps this order.",
+            "required": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_sgwrd_pg_source",
+                        "operator": "==",
+                        "value": "selected"
+                    }
+                ]
+            ],
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "post_type": [
+                "product"
+            ],
+            "post_status": [
+                "publish"
+            ],
+            "taxonomy": [],
+            "filters": [
+                "search",
+                "taxonomy"
+            ],
+            "return_format": "id",
+            "min": "",
+            "max": 24,
+            "elements": "",
+            "bidirectional": 0,
+            "bidirectional_target": []
+        },
+        {
             "key": "field_sgwrd_pg_count",
             "label": "Number of products",
             "name": "count",
@@ -95,7 +136,15 @@
             "type": "number",
             "instructions": "",
             "required": 0,
-            "conditional_logic": 0,
+            "conditional_logic": [
+                [
+                    {
+                        "field": "field_sgwrd_pg_source",
+                        "operator": "!=",
+                        "value": "selected"
+                    }
+                ]
+            ],
             "wrapper": {
                 "width": "50",
                 "class": "",
@@ -174,5 +223,5 @@
     "active": true,
     "description": "Needs WooCommerce.",
     "show_in_rest": 0,
-    "modified": 1758672000
+    "modified": 1790208000
 }

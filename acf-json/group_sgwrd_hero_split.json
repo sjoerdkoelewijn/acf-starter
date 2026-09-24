@@ -1,0 +1,207 @@
+{
+    "key": "group_sgwrd_hero_split",
+    "title": "Block: Split hero",
+    "fields": [
+        {
+            "key": "field_sgwrd_hs_panels",
+            "label": "Panels",
+            "name": "panels",
+            "aria-label": "",
+            "type": "repeater",
+            "instructions": "Two panels, side by side. They stack on a telephone.",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "layout": "block",
+            "pagination": 0,
+            "min": 2,
+            "max": 2,
+            "collapsed": "",
+            "button_label": "Add panel",
+            "rows_per_page": 20,
+            "sub_fields": [
+                {
+                    "key": "field_sgwrd_hs_image",
+                    "label": "Image",
+                    "name": "image",
+                    "aria-label": "",
+                    "type": "image",
+                    "instructions": "The background of this half.",
+                    "required": 1,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "return_format": "array",
+                    "library": "all",
+                    "min_width": "",
+                    "min_height": "",
+                    "min_size": "",
+                    "max_width": "",
+                    "max_height": "",
+                    "max_size": "",
+                    "mime_types": "",
+                    "preview_size": "large",
+                    "parent_repeater": "field_sgwrd_hs_panels"
+                },
+                {
+                    "key": "field_sgwrd_hs_overlay",
+                    "label": "Overlay",
+                    "name": "overlay_opacity",
+                    "aria-label": "",
+                    "type": "range",
+                    "instructions": "Raise it when the text is hard to read.",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "default_value": 40,
+                    "min": 0,
+                    "max": 100,
+                    "step": 5,
+                    "prepend": "",
+                    "append": "%",
+                    "parent_repeater": "field_sgwrd_hs_panels"
+                },
+                {
+                    "key": "field_sgwrd_hs_eyebrow",
+                    "label": "Eyebrow",
+                    "name": "eyebrow",
+                    "aria-label": "",
+                    "type": "text",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "default_value": "",
+                    "maxlength": "",
+                    "placeholder": "",
+                    "prepend": "",
+                    "append": "",
+                    "parent_repeater": "field_sgwrd_hs_panels"
+                },
+                {
+                    "key": "field_sgwrd_hs_heading",
+                    "label": "Title",
+                    "name": "heading",
+                    "aria-label": "",
+                    "type": "text",
+                    "instructions": "",
+                    "required": 1,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "default_value": "",
+                    "maxlength": "",
+                    "placeholder": "",
+                    "prepend": "",
+                    "append": "",
+                    "parent_repeater": "field_sgwrd_hs_panels"
+                },
+                {
+                    "key": "field_sgwrd_hs_text",
+                    "label": "Summary",
+                    "name": "text",
+                    "aria-label": "",
+                    "type": "textarea",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "default_value": "",
+                    "maxlength": "",
+                    "rows": 3,
+                    "placeholder": "",
+                    "new_lines": "",
+                    "parent_repeater": "field_sgwrd_hs_panels"
+                },
+                {
+                    "key": "field_sgwrd_hs_link",
+                    "label": "Call to action",
+                    "name": "link",
+                    "aria-label": "",
+                    "type": "link",
+                    "instructions": "",
+                    "required": 0,
+                    "conditional_logic": 0,
+                    "wrapper": {
+                        "width": "",
+                        "class": "",
+                        "id": ""
+                    },
+                    "return_format": "array",
+                    "parent_repeater": "field_sgwrd_hs_panels"
+                }
+            ]
+        },
+        {
+            "key": "field_sgwrd_hs_size",
+            "label": "Height",
+            "name": "size",
+            "aria-label": "",
+            "type": "button_group",
+            "instructions": "",
+            "required": 0,
+            "conditional_logic": 0,
+            "wrapper": {
+                "width": "",
+                "class": "",
+                "id": ""
+            },
+            "choices": {
+                "small": "Small",
+                "medium": "Medium",
+                "large": "Large"
+            },
+            "default_value": "medium",
+            "return_format": "value",
+            "allow_null": 0,
+            "other_choice": 0,
+            "layout": "horizontal",
+            "save_other_choice": 0,
+            "multiple": 0,
+            "ui": 0,
+            "ajax": 0,
+            "placeholder": ""
+        }
+    ],
+    "location": [
+        [
+            {
+                "param": "block",
+                "operator": "==",
+                "value": "acf/hero-split"
+            }
+        ]
+    ],
+    "menu_order": 0,
+    "position": "normal",
+    "style": "default",
+    "label_placement": "top",
+    "instruction_placement": "label",
+    "hide_on_screen": "",
+    "active": true,
+    "description": "Two cover panels next to each other, each with its own title, summary and button.",
+    "show_in_rest": 0,
+    "modified": 1790208000
+}
