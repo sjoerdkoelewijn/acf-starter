@@ -150,7 +150,7 @@
                 "class": "",
                 "id": ""
             },
-            "default_value": 4,
+            "default_value": 3,
             "min": 1,
             "max": 24,
             "step": 1,
@@ -177,7 +177,7 @@
                 "3": "3",
                 "4": "4"
             },
-            "default_value": "4",
+            "default_value": "3",
             "return_format": "value",
             "allow_null": 0,
             "other_choice": 0,
@@ -223,5 +223,5 @@
     "active": true,
     "description": "Needs WooCommerce.",
     "show_in_rest": 0,
-    "modified": 1790208000
+    "modified": 1790509951
 }

@@ -253,11 +253,13 @@
 	text-decoration: none;
 }
 
-.product-card .add_to_cart_button,
-.product-card .added_to_cart,
-.product-card .product_type_variable,
-.product-card .product_type_grouped,
-.product-card .product_type_external {
+/*
+ * Every button in a card looks the same. WooCommerce gives them different
+ * classes (add to cart, select options, buy product), so style .button and
+ * not a list of product types that is never complete.
+ */
+.product-card .button,
+.product-card .added_to_cart {
 	position: relative;
 	z-index: 2;
 	align-self: start;
@@ -272,7 +274,7 @@
 	transition: background var(--transition), color var(--transition);
 }
 
-.product-card .add_to_cart_button:hover,
+.product-card .button:hover,
 .product-card .added_to_cart:hover {
 	background: var(--c-text);
 	color: var(--c-base);

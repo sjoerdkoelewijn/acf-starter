@@ -107,13 +107,13 @@ function sgwrd_product_loop_start() {
 add_filter( 'woocommerce_product_loop_start', 'sgwrd_product_loop_start' );
 
 /**
- * Show four products in a row and twelve on a page.
+ * Show three products in a row and twelve on a page.
  *
  * @return int
  */
 function sgwrd_loop_columns() {
 
-	return 4;
+	return 3;
 }
 add_filter( 'loop_shop_columns', 'sgwrd_loop_columns', 20 );
 
@@ -149,6 +149,28 @@ function sgwrd_loop_product_title() {
 }
 add_action( 'woocommerce_shop_loop_item_title', 'sgwrd_loop_product_title', 10 );
 
+/**
+ * Remove the button from a sold out product in a grid.
+ *
+ * WooCommerce cannot put a sold out product in the cart, so it swaps the
+ * button for a "Read more" link to the product page. The card already says
+ * "Sold out" on its badge, and the whole card is already a link, so that
+ * button only adds noise. A product that is in stock keeps its button.
+ *
+ * @param string     $html    The button markup.
+ * @param WC_Product $product The product.
+ * @return string
+ */
+function sgwrd_loop_hide_sold_out_button( $html, $product ) {
+
+	if ( $product instanceof WC_Product && ! $product->is_in_stock() ) {
+		return '';
+	}
+
+	return $html;
+}
+add_filter( 'woocommerce_loop_add_to_cart_link', 'sgwrd_loop_hide_sold_out_button', 10, 2 );
+
 // Show the star rating below the price, not above the title.
 remove_action( 'woocommerce_after_shop_loop_item_title', 'woocommerce_template_loop_rating', 5 );
 
@@ -170,8 +192,8 @@ add_action( 'woocommerce_before_single_product_summary', 'woocommerce_breadcrumb
  */
 function sgwrd_related_products_args( $args ) {
 
-	$args['posts_per_page'] = 4;
-	$args['columns']        = 4;
+	$args['posts_per_page'] = 3;
+	$args['columns']        = 3;
 
 	return $args;
 }

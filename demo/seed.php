@@ -761,8 +761,8 @@ $home .= sgwrd_demo_block(
 	array(
 		'heading'  => array( 'Featured', 'field_sgwrd_pg_heading' ),
 		'source'   => array( 'featured', 'field_sgwrd_pg_source' ),
-		'count'    => array( 4, 'field_sgwrd_pg_count' ),
-		'columns'  => array( '2', 'field_sgwrd_pg_columns' ),
+		'count'    => array( 3, 'field_sgwrd_pg_count' ),
+		'columns'  => array( '3', 'field_sgwrd_pg_columns' ),
 		'link'     => array(
 			array(
 				'title'  => 'All products',
@@ -826,8 +826,8 @@ $home .= sgwrd_demo_block(
 	array(
 		'heading' => array( 'New in', 'field_sgwrd_pg_heading' ),
 		'source'  => array( 'recent', 'field_sgwrd_pg_source' ),
-		'count'   => array( 4, 'field_sgwrd_pg_count' ),
-		'columns' => array( '2', 'field_sgwrd_pg_columns' ),
+		'count'   => array( 3, 'field_sgwrd_pg_count' ),
+		'columns' => array( '3', 'field_sgwrd_pg_columns' ),
 	),
 	array( 'align' => 'wide' )
 );
