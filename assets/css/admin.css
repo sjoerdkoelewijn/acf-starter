@@ -23,3 +23,50 @@
 .block-editor-block-card__description {
 	font-size: 12px;
 }
+
+/*
+ * The ACF "Edit block" button in the block toolbar.
+ *
+ * ACF shows it as a small pencil, which is easy to miss. Turn it into a clear
+ * button with its label next to the icon. The label is read from the button
+ * itself (attr(aria-label)), so the text always matches ACF.
+ *
+ * The block toolbar lives in the editor chrome, outside the canvas, so this
+ * belongs in admin.css and not in editor.css.
+ *
+ * The selector matches the English label. If the admin runs in another
+ * language, add the translated label to the selector list.
+ *
+ * !important is used on purpose: WordPress styles toolbar icon buttons with
+ * stacked class selectors, and this rule must win over all of them.
+ */
+.block-editor-block-toolbar .components-button[aria-label="Edit block" i] {
+	width: auto !important;
+	min-width: 0 !important;
+	height: 32px !important;
+	margin: 0 6px !important;
+	padding: 0 12px 0 8px !important;
+	gap: 6px;
+	align-self: center;
+	border-radius: 2px;
+	background: #1e1e1e !important;
+	color: #fff !important;
+}
+
+.block-editor-block-toolbar .components-button[aria-label="Edit block" i]::after {
+	content: attr(aria-label);
+	font-size: 13px;
+	font-weight: 500;
+	line-height: 1;
+	white-space: nowrap;
+}
+
+.block-editor-block-toolbar .components-button[aria-label="Edit block" i] svg {
+	fill: currentColor;
+}
+
+.block-editor-block-toolbar .components-button[aria-label="Edit block" i]:hover,
+.block-editor-block-toolbar .components-button[aria-label="Edit block" i]:focus-visible {
+	background: var(--wp-admin-theme-color, #3858e9) !important;
+	color: #fff !important;
+}

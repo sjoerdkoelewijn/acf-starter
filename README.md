@@ -128,9 +128,10 @@ inner blocks changes with each WooCommerce release.
 ### Editing a block
 
 The blocks are **ACF Blocks V3**. The editor shows each block as a live
-preview, so you see the page as it will look. The **edit** button in the block
-toolbar opens the fields in the Expanded Editor, a large window with room for
-repeaters. The fields also show in the sidebar when the block is selected.
+preview, so you see the page as it will look. The **Edit block** button in the
+block toolbar opens the fields in the Expanded Editor, a large window with room
+for repeaters. ACF shows that button as a small pencil; the theme turns it into
+a dark button with its label, see `assets/css/admin.css`. The fields also show in the sidebar when the block is selected.
 
 In the preview, links, buttons and form fields do nothing. A click selects the
 block, so you never leave the page or fill a cart by accident while you edit.
