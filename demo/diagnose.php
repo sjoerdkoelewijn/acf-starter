@@ -91,35 +91,51 @@ if ( function_exists( 'acf_get_block_types' ) ) {
 /* --------------------------------------------------------------------- */
 sgwrd_diag_head( 'ACF editor button labels' );
 
-// Read ACF's own editor scripts, to learn the exact label and class of the
-// button that opens the Expanded Editor. The theme styles that button, so it
-// must match what ACF really prints, not a guess.
+// Read ACF's own editor scripts, to learn the exact label of the button that
+// opens the large block editor. The theme styles that button, so it must
+// match what ACF really prints, not a guess.
 if ( defined( 'ACF_PATH' ) && is_dir( ACF_PATH . 'assets/build/js' ) ) {
 
 	$sgwrd_found = array();
+	$sgwrd_names = array();
 	$sgwrd_iter  = new RecursiveIteratorIterator( new RecursiveDirectoryIterator( ACF_PATH . 'assets/build/js', FilesystemIterator::SKIP_DOTS ) );
 
 	foreach ( $sgwrd_iter as $sgwrd_file ) {
 
-		if ( 'js' !== $sgwrd_file->getExtension() || str_contains( $sgwrd_file->getFilename(), '.min.' ) ) {
+		if ( 'js' !== $sgwrd_file->getExtension() ) {
+			continue;
+		}
+
+		$sgwrd_rel     = str_replace( ACF_PATH . 'assets/build/js/', '', $sgwrd_file->getPathname() );
+		$sgwrd_names[] = $sgwrd_rel;
+
+		if ( ! str_contains( $sgwrd_rel, 'block' ) ) {
 			continue;
 		}
 
 		$sgwrd_js = (string) file_get_contents( $sgwrd_file->getPathname() );
 
-		// Quoted strings about expanding, and class names with "expand" in them.
-		preg_match_all( '/["\']([^"\'\n]{0,50}[Ee]xpand[^"\'\n]{0,50})["\']/', $sgwrd_js, $sgwrd_m1 );
+		// Short quoted strings that sound like a button to open or edit a block.
+		preg_match_all( '/["\'`]([^"\'`\n]{0,60}(?:xpand|[Pp]opup|[Mm]odal|[Ff]ullscreen|[Ee]dit [Bb]lock|[Ee]dit [Ff]ields|[Oo]pen [Ee]ditor)[^"\'`\n]{0,40})["\'`]/', $sgwrd_js, $sgwrd_m );
 
-		foreach ( array_unique( $sgwrd_m1[1] ) as $sgwrd_str ) {
-			$sgwrd_found[ $sgwrd_str ][] = $sgwrd_file->getFilename();
+		foreach ( array_unique( $sgwrd_m[1] ) as $sgwrd_str ) {
+			$sgwrd_found[ $sgwrd_str ][] = basename( $sgwrd_rel );
+		}
+	}
+
+	sgwrd_diag_row( 'script files', count( $sgwrd_names ) );
+
+	foreach ( $sgwrd_names as $sgwrd_rel ) {
+		if ( str_contains( $sgwrd_rel, 'block' ) ) {
+			sgwrd_diag_row( 'block script', $sgwrd_rel );
 		}
 	}
 
 	if ( ! $sgwrd_found ) {
-		sgwrd_diag_row( 'result', 'no "expand" strings found' );
+		sgwrd_diag_row( 'result', 'no matching strings found' );
 	}
 
-	foreach ( array_slice( $sgwrd_found, 0, 40, true ) as $sgwrd_str => $sgwrd_files ) {
+	foreach ( array_slice( $sgwrd_found, 0, 60, true ) as $sgwrd_str => $sgwrd_files ) {
 		sgwrd_diag_row( implode( ',', array_unique( $sgwrd_files ) ), $sgwrd_str );
 	}
 } else {
