@@ -114,7 +114,7 @@ if ( ! $sgwrd_render ) {
 }
 
 WP_CLI::log( '' );
-WP_CLI::log( sprintf( '  %-18s %-7s %-6s %-9s %-9s %s', 'block', 'align', 'image', 'front', 'editor', 'notes' ) );
+WP_CLI::log( sprintf( '  %-18s %-7s %-8s %-6s %-9s %-9s %s', 'block', 'align', 'mode', 'image', 'front', 'editor', 'notes' ) );
 
 foreach ( parse_blocks( get_post_field( 'post_content', $sgwrd_home ) ) as $sgwrd_block ) {
 
@@ -151,9 +151,11 @@ foreach ( parse_blocks( get_post_field( 'post_content', $sgwrd_home ) ) as $sgwr
 
 	WP_CLI::log(
 		sprintf(
-			'  %-18s %-7s %-6s %-9s %-9s %s',
+			'  %-18s %-7s %-8s %-6s %-9s %-9s %s',
 			$sgwrd_name,
 			$sgwrd_attrs['align'] ?? '-',
+			// No stored mode means the block.json default applies.
+			$sgwrd_attrs['mode'] ?? '(default)',
 			$sgwrd_image,
 			strlen( $sgwrd_front ) . 'b',
 			strlen( $sgwrd_editor ) . 'b',
