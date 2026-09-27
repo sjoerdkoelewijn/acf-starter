@@ -11,6 +11,7 @@ defined( 'ABSPATH' ) || exit;
 
 $sgwrd_modules = array(
 	'constants',    // Version, paths and cache busting.
+	'environment',  // Staging badge and mail guard. Off on production.
 	'setup',        // Theme support, menus, image sizes.
 	'assets',       // Styles and scripts.
 	'cleanup',      // Remove the default WordPress output you do not need.

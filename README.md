@@ -72,6 +72,7 @@ acf-starter/
 | File | What it does |
 | --- | --- |
 | `constants.php` | Paths, the version and the cache busting helper. |
+| `environment.php` | The staging badge and the mail guard. It does nothing on production. |
 | `setup.php` | Theme support, menus, image sizes, the footer widget area. |
 | `assets.php` | Loads the styles and the scripts. |
 | `cleanup.php` | Removes the default WordPress output the theme does not use. |
@@ -405,6 +406,85 @@ A child theme may also hold:
 * `blocks/<slug>/` — the parent registers child blocks in the same way.
 * `acf-json/` — the parent loads child field groups too.
 * `woocommerce/` — WooCommerce reads the child theme first.
+
+---
+
+## Staging and production
+
+On a staging copy of a shop, one test order can send a real mail to a real
+customer. The theme stops that.
+
+### Tell WordPress which site it is
+
+Put this line in `wp-config.php` on the staging site, above the line
+`/* That's all, stop editing! */`:
+
+```php
+define( 'WP_ENVIRONMENT_TYPE', 'staging' );
+```
+
+Do not put it on production. Without the line WordPress says `production`.
+
+### What the theme does on staging
+
+On every environment except `production`:
+
+* The admin bar shows a coloured badge, for example **STAGING · mail blocked**.
+  Orange for `staging`, blue for `development` and `local`. You see it in the
+  admin and on the site.
+* All mail from `wp_mail()` stops. WooCommerce order mails and password mails
+  too. Each blocked mail writes one line to the PHP error log.
+
+You want to see the mails? Send them all to one address. Add this to
+`wp-config.php` on staging:
+
+```php
+define( 'SGWRD_STAGING_MAIL_TO', 'you@example.com' );
+```
+
+The subject then starts with `[STAGING → customer@example.com]`. The theme
+removes Cc and Bcc.
+
+### A second guard in the code
+
+Give the theme the production domain, in the child theme:
+
+```php
+add_filter( 'sgwrd_production_host', fn() => 'www.example.com' );
+```
+
+When a site says `production` but its domain is not this one, the theme treats
+it as staging. So mail stays blocked when a staging copy got the production
+`wp-config.php` by mistake.
+
+### Cloudways push and pull
+
+A push or a pull on Cloudways can copy `wp-config.php` too. Then the staging
+line goes to production, or it disappears from staging. In the Cloudways push
+and pull screen, use **Exclude files/folders** and exclude `wp-config.php`.
+After every push or pull, look at the admin bar on both sites.
+
+Never push the database from staging to production on a shop. Production gets
+new orders, customers and stock while you work on staging. A database push
+overwrites them. Push the code only (the workflow or Git), and make content
+changes on production.
+
+### Limits
+
+* An SMTP plugin that replaces `wp_mail()` completely skips this guard. Most
+  SMTP plugins use `wp_mail()`, so the guard works. Test it once: request a
+  password reset on staging and look at the badge and the error log.
+* The guard does not stop payments, webhooks or API calls. Put the payment
+  plugins in test mode on staging.
+
+### Filters
+
+| Filter | What it changes |
+| --- | --- |
+| `sgwrd_environment` | The environment type the theme uses. |
+| `sgwrd_production_host` | The production domain for the second guard. |
+| `sgwrd_mail_guard` | Return `false` to send mail on staging. |
+| `sgwrd_staging_mail_to` | The redirect address. |
 
 ---
 
