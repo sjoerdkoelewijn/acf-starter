@@ -125,6 +125,17 @@ inner blocks changes with each WooCommerce release.
 | Recent posts | `acf/recent-posts` | The newest posts. |
 | Product grid | `acf/product-grid` | WooCommerce products in a grid. |
 
+### Edit mode and preview
+
+Every theme block starts in **edit mode**: the fields sit in the editor canvas.
+The pencil and eye icons in the block toolbar switch between the fields and the
+preview. To change the start mode of one block, set `"mode"` under `"acf"` in
+its `block.json` to `edit`, `preview` or `auto`.
+
+In the preview, links, buttons and form fields do nothing. A click selects the
+block, so you never leave the page or fill a cart by accident. The front end is
+not affected. See the end of `assets/css/editor.css`.
+
 ### The hero
 
 The hero has two layouts. **Cover** puts the media behind the text, with a dark

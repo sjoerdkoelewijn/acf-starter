@@ -71,3 +71,21 @@
 [class*="wp-block-acf-"].is-selected {
 	outline: 0;
 }
+
+/*
+ * A preview is for looking, not for clicking. A link, a button or a form
+ * field in a block preview would take you off the page, or add a product to
+ * the cart, while you meant to select the block. Switch them off in the
+ * preview only. A click now selects the block, and the front end is not
+ * touched.
+ *
+ * .acf-block-preview holds only the preview. The field form in edit mode sits
+ * outside it, so its inputs and buttons keep working.
+ */
+.acf-block-preview a,
+.acf-block-preview button,
+.acf-block-preview input,
+.acf-block-preview select,
+.acf-block-preview textarea {
+	pointer-events: none;
+}

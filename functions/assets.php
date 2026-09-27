@@ -66,8 +66,8 @@ add_action( 'wp_enqueue_scripts', 'sgwrd_enqueue_assets' );
  * Load the editor stylesheets.
  *
  * The editor gets the front end stylesheets as well as the editor one. An ACF
- * block runs in preview mode, so the editor shows the real markup. Without the
- * front end CSS that markup would have no design at all. The shop stylesheet
+ * block starts in edit mode, but its preview shows the real markup. Without
+ * the front end CSS that preview would have no design at all. The shop stylesheet
  * comes too, because the product grid block prints WooCommerce markup.
  *
  * WordPress rewrites the selectors so the rules stay inside the editor canvas.
