@@ -134,11 +134,31 @@ add_filter( 'loop_shop_per_page', 'sgwrd_products_per_page', 20 );
  * ---------------------------------------------------------------------------
  */
 
-// Move the sale flash into the image wrapper. See woocommerce/content-product.php.
-remove_action( 'woocommerce_before_shop_loop_item_title', 'woocommerce_show_product_loop_sale_flash', 10 );
+/**
+ * Take out the WooCommerce parts of the card that the theme prints itself.
+ *
+ *   - The sale flash. The theme prints it in the image wrapper, next to the
+ *     sold out badge. See woocommerce/content-product.php.
+ *   - The title. The default is a bare <h2>; the theme prints its own with a
+ *     class, so the markup stays flat.
+ *   - The star rating above the title. The theme adds it again below the
+ *     price, further down.
+ *
+ * This runs at the start of every card, not when the theme loads. On a normal
+ * page WooCommerce adds these hooks before the theme, so removing them early
+ * works. But in the block editor a product grid is rendered in a REST
+ * request, and there WooCommerce adds its hooks later, when the shortcode
+ * runs. A removal at theme load then comes too early, and the card shows two
+ * sale badges and two titles. At the start of the card the hooks are always
+ * there, and removing a hook twice is harmless.
+ */
+function sgwrd_loop_card_hooks() {
 
-// The default title is an <h2>. The theme prints its own, so the markup stays flat.
-remove_action( 'woocommerce_shop_loop_item_title', 'woocommerce_template_loop_product_title', 10 );
+	remove_action( 'woocommerce_before_shop_loop_item_title', 'woocommerce_show_product_loop_sale_flash', 10 );
+	remove_action( 'woocommerce_shop_loop_item_title', 'woocommerce_template_loop_product_title', 10 );
+	remove_action( 'woocommerce_after_shop_loop_item_title', 'woocommerce_template_loop_rating', 5 );
+}
+add_action( 'woocommerce_before_shop_loop_item', 'sgwrd_loop_card_hooks', 0 );
 
 /**
  * Print the product title as a heading with a class.
@@ -171,8 +191,8 @@ function sgwrd_loop_hide_sold_out_button( $html, $product ) {
 }
 add_filter( 'woocommerce_loop_add_to_cart_link', 'sgwrd_loop_hide_sold_out_button', 10, 2 );
 
-// Show the star rating below the price, not above the title.
-remove_action( 'woocommerce_after_shop_loop_item_title', 'woocommerce_template_loop_rating', 5 );
+// The star rating, below the price (10) instead of above the title.
+add_action( 'woocommerce_after_shop_loop_item_title', 'woocommerce_template_loop_rating', 15 );
 
 /*
  * ---------------------------------------------------------------------------
