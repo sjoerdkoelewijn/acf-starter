@@ -255,7 +255,13 @@ bash wp-content/themes/acf-starter/demo/provision.sh --fresh
 
 ## What you get
 
-**Photos.** The seeder looks in two places: the `demo/images` folder on the
+**Photos.** The seeder sorts your photos by shape and gives each block the
+one that fits: a **wide** photo for a hero, a split hero panel, a category
+banner and the About image, a **tall** photo for a product card and the About
+cards. A photo counts as wide from 5:4 and as tall from 4:5. When it runs out
+of one shape it falls back to any photo, so the demo is never empty.
+
+It looks in two places: the `demo/images` folder on the
 server, and the **media library**. Uploading in **Media → Add new** is the
 easy way — no SFTP. Run the demo again and the photos hang themselves on the
 products. A photo with the same name in `demo/images` wins over one in the

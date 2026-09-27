@@ -306,12 +306,47 @@ WP_CLI::log( 'Images' );
  * products.csv can name a photo from either place.
  */
 
+/**
+ * Say whether a photo is wide, tall or square.
+ *
+ * A hero needs a wide photo and a product card needs a tall one, so the
+ * seeder sorts the photos by shape before it hands them out.
+ *
+ * @param int $width  Width in pixels.
+ * @param int $height Height in pixels.
+ * @return string 'landscape', 'portrait' or 'square'.
+ */
+function sgwrd_demo_shape( $width, $height ) {
+
+	if ( $width < 1 || $height < 1 ) {
+		return 'square';
+	}
+
+	$ratio = $width / $height;
+
+	if ( $ratio >= 1.25 ) {
+		return 'landscape';
+	}
+
+	if ( $ratio <= 0.8 ) {
+		return 'portrait';
+	}
+
+	return 'square';
+}
+
 $sgwrd_files = array();
 
 // Files on disk.
 if ( is_dir( $sgwrd_images ) ) {
 	foreach ( (array) glob( $sgwrd_images . '/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP}', GLOB_BRACE ) as $file ) {
-		$sgwrd_files[ basename( $file ) ] = array( 'file' => $file );
+
+		$size = @getimagesize( $file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors
+
+		$sgwrd_files[ basename( $file ) ] = array(
+			'file'  => $file,
+			'shape' => sgwrd_demo_shape( (int) ( $size[0] ?? 0 ), (int) ( $size[1] ?? 0 ) ),
+		);
 	}
 }
 
@@ -347,45 +382,90 @@ foreach ( $sgwrd_library as $sgwrd_id ) {
 		continue;
 	}
 
-	$sgwrd_files[ $sgwrd_name ] = array( 'id' => (int) $sgwrd_id );
+	$sgwrd_meta = wp_get_attachment_metadata( $sgwrd_id );
+
+	$sgwrd_files[ $sgwrd_name ] = array(
+		'id'    => (int) $sgwrd_id,
+		'shape' => sgwrd_demo_shape( (int) ( $sgwrd_meta['width'] ?? 0 ), (int) ( $sgwrd_meta['height'] ?? 0 ) ),
+	);
+
 	++$sgwrd_in_library;
 }
 
-$sgwrd_pool = array_values( $sgwrd_files );
+// One list per shape, so each block gets a photo that fits it.
+$sgwrd_pool = array(
+	'any'       => array_values( $sgwrd_files ),
+	'landscape' => array(),
+	'portrait'  => array(),
+	'square'    => array(),
+);
 
-if ( ! $sgwrd_pool ) {
+foreach ( $sgwrd_files as $sgwrd_entry ) {
+	$sgwrd_pool[ $sgwrd_entry['shape'] ][] = $sgwrd_entry;
+}
+
+if ( ! $sgwrd_pool['any'] ) {
 	sgwrd_demo_say( 'No photos found. The demo still builds, with grey placeholders.' );
 	sgwrd_demo_say( 'Upload photos in Media, or put them in demo/images, and run this again.' );
 } else {
-	sgwrd_demo_say( sprintf( '%d photo(s): %d in demo/images, %d in the media library', count( $sgwrd_pool ), $sgwrd_on_disk, $sgwrd_in_library ) );
+	sgwrd_demo_say(
+		sprintf(
+			'%d photo(s): %d in demo/images, %d in the media library',
+			count( $sgwrd_pool['any'] ),
+			$sgwrd_on_disk,
+			$sgwrd_in_library
+		)
+	);
+	sgwrd_demo_say(
+		sprintf(
+			'shapes: %d wide, %d tall, %d square',
+			count( $sgwrd_pool['landscape'] ),
+			count( $sgwrd_pool['portrait'] ),
+			count( $sgwrd_pool['square'] )
+		)
+	);
 }
 
-unset( $sgwrd_library, $sgwrd_id, $sgwrd_path, $sgwrd_name );
+unset( $sgwrd_library, $sgwrd_id, $sgwrd_path, $sgwrd_name, $sgwrd_meta, $sgwrd_entry );
 
 /**
  * Get the attachment ID for a photo.
  *
- * The name comes from the "images" column in products.csv. When the name is
- * empty, or the photo is not there, the seeder takes the next photo in the
- * list and moves on. So your photos are used even before you edit the CSV.
+ * A name from the "images" column in products.csv always wins. With no name,
+ * the seeder takes the next photo of the shape the block needs: a wide one
+ * for a hero, a tall one for a product card. When it has none of that shape,
+ * it falls back to any photo, so the demo is never empty.
  *
- * @param string $name File name from the CSV. May be empty.
+ * @param string $name  File name from the CSV. May be empty.
+ * @param string $shape 'landscape', 'portrait', 'square' or 'any'.
  * @return int Attachment ID, or 0 when there is no photo at all.
  */
-function sgwrd_demo_pick( $name ) {
+function sgwrd_demo_pick( $name, $shape = 'any' ) {
 
 	global $sgwrd_files, $sgwrd_pool;
 
-	static $next = 0;
+	// One counter per shape, so each list walks round on its own.
+	static $next = array();
 
 	$name  = trim( (string) $name );
 	$entry = null;
 
 	if ( $name && isset( $sgwrd_files[ $name ] ) ) {
+
 		$entry = $sgwrd_files[ $name ];
-	} elseif ( $sgwrd_pool ) {
-		$entry = $sgwrd_pool[ $next % count( $sgwrd_pool ) ];
-		++$next;
+
+	} else {
+
+		// Use the asked shape when there is one, otherwise take anything.
+		if ( empty( $sgwrd_pool[ $shape ] ) ) {
+			$shape = 'any';
+		}
+
+		if ( ! empty( $sgwrd_pool[ $shape ] ) ) {
+			$index           = $next[ $shape ] ?? 0;
+			$entry           = $sgwrd_pool[ $shape ][ $index % count( $sgwrd_pool[ $shape ] ) ];
+			$next[ $shape ]  = $index + 1;
+		}
 	}
 
 	if ( ! $entry ) {
@@ -453,7 +533,7 @@ foreach ( $sgwrd_cat_spec as $slug => $spec ) {
 	// The category header fields.
 	update_field( 'field_sgwrd_term_intro', '<p>' . esc_html( $spec['intro'] ) . '</p>', $term );
 
-	$banner = sgwrd_demo_pick( '' );
+	$banner = sgwrd_demo_pick( '', 'landscape' );
 
 	if ( $banner ) {
 		update_field( 'field_sgwrd_term_banner', $banner, $term );
@@ -546,7 +626,7 @@ while ( ( $sgwrd_line = fgetcsv( $sgwrd_handle ) ) !== false ) {
 	$att    = array();
 
 	foreach ( $images ? $images : array( '' ) as $image ) {
-		$found = sgwrd_demo_pick( $image );
+		$found = sgwrd_demo_pick( $image, 'portrait' );
 
 		if ( $found ) {
 			$att[] = $found;
@@ -610,7 +690,7 @@ $home .= sgwrd_demo_block(
 			'text'             => array( '<p>A small collection of everyday pieces, in materials that get better with age.</p>', 'field_sgwrd_hero_text' ),
 			'layout'           => array( 'cover', 'field_sgwrd_hero_layout' ),
 			'background_media' => array( 'image', 'field_sgwrd_hero_media' ),
-			'image'            => array( sgwrd_demo_pick( '' ), 'field_sgwrd_hero_image' ),
+			'image'            => array( sgwrd_demo_pick( '', 'landscape' ), 'field_sgwrd_hero_image' ),
 			'overlay_opacity'  => array( 45, 'field_sgwrd_hero_overlay' ),
 			'size'             => array( 'large', 'field_sgwrd_hero_size' ),
 		),
@@ -694,7 +774,7 @@ $home .= sgwrd_demo_block(
 			'field_sgwrd_hs_panels',
 			array(
 				array(
-					'image'           => sgwrd_demo_pick( '' ),
+					'image'           => sgwrd_demo_pick( '', 'landscape' ),
 					'overlay_opacity' => 40,
 					'eyebrow'         => 'Clothing',
 					'heading'         => 'Wear it every day',
@@ -706,7 +786,7 @@ $home .= sgwrd_demo_block(
 					),
 				),
 				array(
-					'image'           => sgwrd_demo_pick( '' ),
+					'image'           => sgwrd_demo_pick( '', 'landscape' ),
 					'overlay_opacity' => 55,
 					'eyebrow'         => 'Home',
 					'heading'         => 'For the table',
@@ -818,7 +898,7 @@ $about = sgwrd_demo_block(
 		'eyebrow'        => array( 'Our story', 'field_sgwrd_ci_eyebrow' ),
 		'heading'        => array( 'We started with one jumper', 'field_sgwrd_ci_heading' ),
 		'text'           => array( '<p>We could not find a jumper that lasted more than a season, so we made one. Then people asked where to buy it.</p><p>Everything we sell is made in small workshops in Portugal and Italy. We visit each of them.</p>', 'field_sgwrd_ci_text' ),
-		'image'          => array( sgwrd_demo_pick( '' ), 'field_sgwrd_ci_image' ),
+		'image'          => array( sgwrd_demo_pick( '', 'landscape' ), 'field_sgwrd_ci_image' ),
 		'image_position' => array( 'right', 'field_sgwrd_ci_position' ),
 	),
 	array( 'align' => 'wide' )
@@ -836,17 +916,17 @@ $about .= sgwrd_demo_block(
 			'field_sgwrd_cards_items',
 			array(
 				array(
-					'image' => sgwrd_demo_pick( '' ),
+					'image' => sgwrd_demo_pick( '', 'portrait' ),
 					'title' => 'Materials',
 					'text'  => 'Wool, linen and cotton. Nothing that sheds plastic in the wash.',
 				),
 				array(
-					'image' => sgwrd_demo_pick( '' ),
+					'image' => sgwrd_demo_pick( '', 'portrait' ),
 					'title' => 'Makers',
 					'text'  => 'Four workshops, all in Europe, all visited twice a year.',
 				),
 				array(
-					'image' => sgwrd_demo_pick( '' ),
+					'image' => sgwrd_demo_pick( '', 'portrait' ),
 					'title' => 'Repairs',
 					'text'  => 'Send it back and we mend it, for as long as you own it.',
 				),
