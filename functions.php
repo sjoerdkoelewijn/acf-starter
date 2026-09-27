@@ -19,6 +19,7 @@ $sgwrd_modules = array(
 	'admin',        // A smaller, simpler WordPress admin.
 	'acf',          // ACF JSON sync, ACF blocks and the options page.
 	'migrations',   // Content migrations: wp sgwrd migrate. WP-CLI only.
+	'content-sync', // Content from staging to production: wp sgwrd content.
 	'template-tags',// Small helper functions for the templates.
 	'shortcodes',   // Theme shortcodes.
 	'woocommerce',  // Shop support. The file does nothing when WooCommerce is off.

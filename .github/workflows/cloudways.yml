@@ -1,6 +1,7 @@
 name: Cloudways
 
-# Run WP-CLI on the Cloudways demo from GitHub.
+# Run WP-CLI on a Cloudways site from GitHub: production (or the demo), and
+# staging when you have one.
 #
 # Start it by hand: Actions -> Cloudways -> Run workflow. Pick what to do.
 # The run log shows everything the server printed, so a failure can be read
@@ -17,6 +18,13 @@ name: Cloudways
 #   CW_SSH_KNOWN_HOSTS   Optional. The output of
 #                        ssh-keyscan <host>. Without it the first run
 #                        trusts whatever answers, which is weaker.
+#
+# For a staging site, also:
+#
+#   CW_STAGING_SSH_USER  The application SSH user of the staging app.
+#   CW_STAGING_APP_PATH  applications/<staging-app>/public_html
+#   CW_STAGING_SSH_HOST  Optional. Same as CW_SSH_HOST when it is not set.
+#   CW_STAGING_SSH_KEY   Optional. Same as CW_SSH_KEY when it is not set.
 #
 # See demo/README.md for the full setup.
 
@@ -38,7 +46,18 @@ on:
           - diagnose
           - migrate-status
           - migrate
+          - content-diff
+          - content-preview
+          - content-sync
           - wp
+      target:
+        description: "Which site. The content actions ignore this: they always go from staging to production."
+        type: choice
+        required: true
+        default: production
+        options:
+          - production
+          - staging
       wp_command:
         description: "For action 'wp': the WP-CLI command, without the word wp"
         type: string
@@ -46,6 +65,11 @@ on:
         default: ""
       confirm_fresh:
         description: "Tick this to allow seed-fresh. It deletes the demo content first."
+        type: boolean
+        required: false
+        default: false
+      force_conflicts:
+        description: "For content-sync: when production changed an item too, take the staging version anyway."
         type: boolean
         required: false
         default: false
@@ -60,7 +84,7 @@ permissions:
 
 jobs:
   run:
-    name: ${{ inputs.action }}
+    name: ${{ inputs.action }} (${{ startsWith(inputs.action, 'content-') && 'staging to production' || inputs.target }})
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -73,10 +97,14 @@ jobs:
 
       - name: Check the secrets
         env:
+          ACTION: ${{ inputs.action }}
+          TARGET: ${{ inputs.target }}
           CW_SSH_HOST: ${{ secrets.CW_SSH_HOST }}
           CW_SSH_USER: ${{ secrets.CW_SSH_USER }}
           CW_SSH_KEY: ${{ secrets.CW_SSH_KEY }}
           CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
+          CW_STAGING_SSH_USER: ${{ secrets.CW_STAGING_SSH_USER }}
+          CW_STAGING_APP_PATH: ${{ secrets.CW_STAGING_APP_PATH }}
         run: |
           set -euo pipefail
           missing=""
@@ -84,12 +112,20 @@ jobs:
           [ -n "$CW_SSH_USER" ] || missing="$missing CW_SSH_USER"
           [ -n "$CW_SSH_KEY" ]  || missing="$missing CW_SSH_KEY"
           [ -n "$CW_APP_PATH" ] || missing="$missing CW_APP_PATH"
+
+          # Staging is needed for the staging target and for every content action.
+          case "$ACTION" in content-*) TARGET=staging ;; esac
+          if [ "$TARGET" = "staging" ]; then
+            [ -n "$CW_STAGING_SSH_USER" ] || missing="$missing CW_STAGING_SSH_USER"
+            [ -n "$CW_STAGING_APP_PATH" ] || missing="$missing CW_STAGING_APP_PATH"
+          fi
+
           if [ -n "$missing" ]; then
             echo "::error::These secrets are not set:$missing"
             echo "Add them under Settings > Secrets and variables > Actions."
             exit 1
           fi
-          echo "All four secrets are there."
+          echo "The secrets are there."
 
       - name: Guard the inputs
         env:
@@ -144,15 +180,27 @@ jobs:
 
       - name: Set up SSH
         env:
+          ACTION: ${{ inputs.action }}
+          TARGET: ${{ inputs.target }}
           CW_SSH_HOST: ${{ secrets.CW_SSH_HOST }}
+          CW_SSH_USER: ${{ secrets.CW_SSH_USER }}
           CW_SSH_KEY: ${{ secrets.CW_SSH_KEY }}
           CW_SSH_PORT: ${{ secrets.CW_SSH_PORT }}
           CW_SSH_KNOWN_HOSTS: ${{ secrets.CW_SSH_KNOWN_HOSTS }}
+          CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
+          CW_STAGING_SSH_HOST: ${{ secrets.CW_STAGING_SSH_HOST }}
+          CW_STAGING_SSH_USER: ${{ secrets.CW_STAGING_SSH_USER }}
+          CW_STAGING_SSH_KEY: ${{ secrets.CW_STAGING_SSH_KEY }}
+          CW_STAGING_APP_PATH: ${{ secrets.CW_STAGING_APP_PATH }}
         run: |
           set -euo pipefail
 
-          # Keep the address out of the log.
+          staging_host="${CW_STAGING_SSH_HOST:-$CW_SSH_HOST}"
+          staging_key="${CW_STAGING_SSH_KEY:-$CW_SSH_KEY}"
+
+          # Keep the addresses out of the log.
           echo "::add-mask::$CW_SSH_HOST"
+          echo "::add-mask::$staging_host"
 
           port="${CW_SSH_PORT:-22}"
           echo "SSH_PORT=$port" >> "$GITHUB_ENV"
@@ -160,56 +208,83 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          printf '%s\n' "$CW_SSH_KEY" > ~/.ssh/id_deploy
-          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$CW_SSH_KEY" > ~/.ssh/id_production
+          printf '%s\n' "$staging_key" > ~/.ssh/id_staging
+          chmod 600 ~/.ssh/id_production ~/.ssh/id_staging
 
           if [ -n "${CW_SSH_KNOWN_HOSTS:-}" ]; then
             printf '%s\n' "$CW_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
-            echo "Host key came from CW_SSH_KNOWN_HOSTS."
+            echo "Host keys came from CW_SSH_KNOWN_HOSTS."
           else
-            ssh-keyscan -p "$port" -H "$CW_SSH_HOST" > ~/.ssh/known_hosts 2>/dev/null
+            for host in $(printf '%s\n%s\n' "$CW_SSH_HOST" "$staging_host" | sort -u); do
+              ssh-keyscan -p "$port" -H "$host" >> ~/.ssh/known_hosts 2>/dev/null
+            done
             echo "::warning::CW_SSH_KNOWN_HOSTS is not set, so this run trusts the key the server offered. Set the secret to close that gap."
           fi
 
           chmod 600 ~/.ssh/known_hosts
 
-          cat > ~/.ssh/config <<CONF
-          Host cloudways
-            HostName $CW_SSH_HOST
-            User ${{ secrets.CW_SSH_USER }}
-            Port $port
-            IdentityFile ~/.ssh/id_deploy
-            IdentitiesOnly yes
-            StrictHostKeyChecking yes
-            ServerAliveInterval 30
-          CONF
+          # The content actions always go from staging to production. The
+          # other actions go to the target you picked.
+          case "$ACTION" in
+            content-diff) TARGET=staging ;;
+            content-*)    TARGET=production ;;
+          esac
+
+          host_block() {
+            printf 'Host %s\n  HostName %s\n  User %s\n  Port %s\n  IdentityFile ~/.ssh/id_%s\n  IdentitiesOnly yes\n  StrictHostKeyChecking yes\n  ServerAliveInterval 30\n\n' "$1" "$2" "$3" "$port" "$4"
+          }
+
+          {
+            host_block production "$CW_SSH_HOST" "$CW_SSH_USER" production
+            if [ -n "$CW_STAGING_SSH_USER" ]; then
+              host_block staging "$staging_host" "$CW_STAGING_SSH_USER" staging
+            fi
+            if [ "$TARGET" = "staging" ]; then
+              host_block cloudways "$staging_host" "$CW_STAGING_SSH_USER" staging
+            else
+              host_block cloudways "$CW_SSH_HOST" "$CW_SSH_USER" production
+            fi
+          } > ~/.ssh/config
           chmod 600 ~/.ssh/config
 
+          {
+            echo "TARGET=$TARGET"
+            echo "PROD_PATH=$CW_APP_PATH"
+            echo "STAGING_PATH=$CW_STAGING_APP_PATH"
+            if [ "$TARGET" = "staging" ]; then
+              echo "APP_PATH=$CW_STAGING_APP_PATH"
+            else
+              echo "APP_PATH=$CW_APP_PATH"
+            fi
+          } >> "$GITHUB_ENV"
+
+          echo "Target: $TARGET"
           ssh -o ConnectTimeout=15 cloudways 'echo "Connected as $(whoami) on $(hostname)"'
+          case "$ACTION" in
+            content-preview|content-sync)
+              ssh -o ConnectTimeout=15 staging 'echo "Staging: connected as $(whoami)"' ;;
+          esac
 
       - name: Check the server
-        env:
-          CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
         run: |
           set -euo pipefail
 
           ssh cloudways "command -v wp >/dev/null" \
             || { echo "::error::WP-CLI is not on this server."; exit 1; }
 
-          ssh cloudways "cd '$CW_APP_PATH' && wp core is-installed" \
-            || { echo "::error::No WordPress at $CW_APP_PATH. Check CW_APP_PATH."; exit 1; }
+          ssh cloudways "cd '$APP_PATH' && wp core is-installed" \
+            || { echo "::error::No WordPress at $APP_PATH. Check the app path secret."; exit 1; }
 
-          echo "WordPress $(ssh cloudways "cd '$CW_APP_PATH' && wp core version")"
+          echo "WordPress $(ssh cloudways "cd '$APP_PATH' && wp core version")"
           echo "WP-CLI $(ssh cloudways 'wp --version' | awk '{print $2}')"
 
       - name: Send the theme
         if: inputs.action == 'deploy' || inputs.action == 'provision' || inputs.action == 'migrate'
-        env:
-          CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
         run: |
           set -euo pipefail
 
-          target="$CW_APP_PATH/wp-content/themes/$THEME_SLUG"
+          target="$APP_PATH/wp-content/themes/$THEME_SLUG"
 
           # A wrong path plus --delete would remove the wrong folder. Refuse
           # anything that is not the theme folder.
@@ -234,17 +309,17 @@ jobs:
             ./ "cloudways:$target/"
 
           echo "Theme sent to $target"
-          ssh cloudways "cd '$CW_APP_PATH' && wp theme activate '$THEME_SLUG'"
+          ssh cloudways "cd '$APP_PATH' && wp theme activate '$THEME_SLUG'"
 
       - name: Do it
         env:
           ACTION: ${{ inputs.action }}
           WP_COMMAND: ${{ inputs.wp_command }}
-          CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
+          FORCE_CONFLICTS: ${{ inputs.force_conflicts }}
         run: |
           set -euo pipefail
 
-          app="$CW_APP_PATH"
+          app="$APP_PATH"
           theme="$app/wp-content/themes/$THEME_SLUG"
 
           case "$ACTION" in
@@ -312,36 +387,82 @@ jobs:
 
             migrate)
               # The theme with the new migrations went up in the step before.
-              # First a database backup, next to public_html and so out of
-              # reach of the web. The run stops when the backup fails.
-              ssh cloudways "cd '$app' && bash -s" <<'REMOTE'
-                set -euo pipefail
-                # A WP-CLI error here stops the script, because of set -e.
-                plan="$(wp sgwrd migrate run --dry-run)"
-                printf '%s\n' "$plan"
-                if ! printf '%s\n' "$plan" | grep -q 'Would run'; then
-                  echo "Nothing to do. All migrations ran."
-                  exit 0
-                fi
-                backups="$(cd .. && pwd)/db-backups"
-                mkdir -p "$backups"
-                chmod 700 "$backups"
-                file="$backups/before-migrate-$(date -u +%Y%m%d-%H%M%S).sql.gz"
-                if ! wp db export - | gzip > "$file" || ! gzip -t "$file"; then
-                  rm -f "$file"
-                  echo "::error::The database backup failed, so no migration ran."
-                  exit 1
-                fi
-                echo "Backup: $file ($(du -h "$file" | cut -f1))"
-                # Keep the last ten.
-                ls -1t "$backups"/before-migrate-*.sql.gz | tail -n +11 | xargs -r rm -f
-                wp sgwrd migrate run
-                wp sgwrd migrate status
-                wp cache flush
-                if wp cli has-command 'breeze purge'; then
-                  wp breeze purge --cache=all
-                fi
-          REMOTE
+              plan="$(ssh cloudways "cd '$app' && wp sgwrd migrate run --dry-run")"
+              printf '%s\n' "$plan"
+              if ! printf '%s\n' "$plan" | grep -q 'Would run'; then
+                echo "Nothing to do. All migrations ran."
+                exit 0
+              fi
+
+              # No backup, no migration.
+              ssh cloudways "cd '$app' && bash -s -- before-migrate" < .github/scripts/backup-db.sh
+              ssh cloudways "cd '$app' && wp sgwrd migrate run && wp sgwrd migrate status && wp cache flush"
+              ssh cloudways "cd '$app' && if wp cli has-command 'breeze purge'; then wp breeze purge --cache=all; fi"
+              ;;
+
+            content-diff)
+              # Look only, on staging.
+              ssh cloudways "cd '$app' && wp sgwrd content diff"
+              ;;
+
+            content-preview|content-sync)
+              # Both sites need a theme with the content sync in it.
+              ssh staging "cd '$STAGING_PATH' && wp cli has-command 'sgwrd content'" \
+                || { echo "::error::The theme on staging has no content sync. Deploy the theme to staging first."; exit 1; }
+              ssh production "cd '$PROD_PATH' && wp cli has-command 'sgwrd content'" \
+                || { echo "::error::The theme on production has no content sync. Deploy the theme to production first."; exit 1; }
+
+              run_dir="sgwrd-sync/$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+              sdir="$(ssh staging "cd '$STAGING_PATH/..' && pwd")/$run_dir"
+              pdir="$(ssh production "cd '$PROD_PATH/..' && pwd")/$run_dir"
+
+              cleanup() {
+                ssh staging "rm -rf '$sdir'" || true
+                ssh production "rm -rf '$pdir'" || true
+                rm -rf ./sync
+              }
+              trap cleanup EXIT
+
+              # 1. Staging writes its changes to a folder.
+              ssh staging "cd '$STAGING_PATH' && wp sgwrd content export '$sdir'"
+
+              # 2. The folder goes to production, through this runner.
+              mkdir -p sync
+              rsync -az "staging:$sdir/" sync/
+              ssh production "mkdir -p '$pdir'"
+              rsync -az sync/ "production:$pdir/"
+
+              # A dry run first, so the log shows the plan.
+              plan="$(ssh production "cd '$PROD_PATH' && wp sgwrd content import '$pdir' --dry-run")"
+              printf '%s\n' "$plan"
+
+              if [ "$ACTION" = "content-preview" ]; then
+                exit 0
+              fi
+
+              if printf '%s\n' "$plan" | grep -q 'Nothing to do'; then
+                exit 0
+              fi
+
+              # 3. A backup of production. No backup, no sync.
+              ssh production "cd '$PROD_PATH' && bash -s -- before-content-sync" < .github/scripts/backup-db.sh
+
+              # 4. Production takes the changes.
+              force=""
+              [ "$FORCE_CONFLICTS" = "true" ] && force="--force"
+              status=0
+              ssh production "cd '$PROD_PATH' && wp sgwrd content import '$pdir' $force" || status=$?
+
+              # 5. Staging moves its baseline forward for what went in. This
+              #    runs after a partial failure too, for the part that worked.
+              if ssh production "test -f '$pdir/result.json'"; then
+                rsync -az "production:$pdir/result.json" sync/result.json
+                rsync -az sync/result.json "staging:$sdir/result.json"
+                ssh staging "cd '$STAGING_PATH' && wp sgwrd content accept '$sdir'"
+              fi
+
+              ssh production "cd '$PROD_PATH' && wp cache flush && if wp cli has-command 'breeze purge'; then wp breeze purge --cache=all; fi"
+              exit "$status"
               ;;
 
             wp)

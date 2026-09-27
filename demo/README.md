@@ -208,6 +208,9 @@ Never put these in a chat, an issue or a commit.
 | `diagnose` | Prints what the theme sees: versions, blocks, products. Changes nothing. |
 | `migrate-status` | Shows which content migrations ran and which wait. Changes nothing. |
 | `migrate` | Deploy, a database backup, then the waiting content migrations. |
+| `content-diff` | Shows what changed on staging. Changes nothing. |
+| `content-preview` | Shows what a content sync would do on production. Changes nothing. |
+| `content-sync` | A backup of production, then the content changes from staging. |
 | `wp` | Runs one WP-CLI command that you type. |
 
 Start with `status`. It proves the key, the path and WP-CLI all work, and it

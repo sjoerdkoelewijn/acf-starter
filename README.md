@@ -81,6 +81,7 @@ acf-starter/
 | `admin.php` | Makes the WordPress admin smaller. |
 | `acf.php` | ACF JSON sync, the block loader and the options page. |
 | `migrations.php` | Content migrations: the `wp sgwrd migrate` command and its helpers. |
+| `content-sync.php` | Content from staging to production: the `wp sgwrd content` command. |
 | `template-tags.php` | Small helpers for the templates and the blocks. |
 | `shortcodes.php` | `[year]` and `[site_name]`. |
 | `woocommerce.php` | The shop. The file stops at the top when WooCommerce is off. |
@@ -468,8 +469,8 @@ After every push or pull, look at the admin bar on both sites.
 
 Never push the database from staging to production on a shop. Production gets
 new orders, customers and stock while you work on staging. A database push
-overwrites them. Push the code only (the workflow or Git). Make content
-changes on production, or put them in a content migration (next section).
+overwrites them. Push the code only (the workflow or Git). For content, use
+the content sync or a content migration (the next two sections).
 
 ### Limits
 
@@ -487,6 +488,107 @@ changes on production, or put them in a content migration (next section).
 | `sgwrd_production_host` | The production domain for the second guard. |
 | `sgwrd_mail_guard` | Return `false` to send mail on staging. |
 | `sgwrd_staging_mail_to` | The redirect address. |
+
+---
+
+## Content sync
+
+Make the content changes on staging, look at them, and send only those
+changes to production. Production keeps its orders, customers, stock and
+its own new content.
+
+### What goes over
+
+| Goes over | Never goes over |
+| --- | --- |
+| Pages and posts, with their blocks and ACF fields | Products, prices, stock |
+| Categories (`category`, `product_cat`), with the category header and FAQ | Orders, customers, reviews |
+| Menus, and which menu shows where | Users |
+| Site title, tagline, front page, posts page | WooCommerce settings |
+| The theme settings page | Plugins and code (those go with Git) |
+| New images that the changed content uses | |
+
+A filter changes each list: `sgwrd_content_post_types`,
+`sgwrd_content_taxonomies`, `sgwrd_content_options`.
+
+### How it knows what changed
+
+1. **The baseline.** When staging is a fresh copy of production, the theme
+   takes a fingerprint of all content on staging. It does this by itself at
+   the first admin page load after the copy or a pull. Nothing to do for you,
+   as long as staging has the `WP_ENVIRONMENT_TYPE` line (see above).
+2. **Your changes.** You change pages, menus and settings on staging.
+3. **The compare.** Each content item on staging is compared with the
+   baseline. Only new and changed items go into the package.
+4. **The check on production.** Each item is compared with the same baseline
+   on production:
+
+| On production | What happens |
+| --- | --- |
+| Same as the baseline | The item goes in. Only staging changed it. |
+| Already the same as staging | Nothing. |
+| Changed since the baseline | **Conflict.** The item stays as it is, and the log shows it. |
+
+A conflict means that somebody changed the same page on production. You
+decide: make the change by hand, or run again with `force_conflicts` ticked
+so the staging version wins. WordPress keeps a revision of every page it
+changes, so you can go back.
+
+5. **After the sync**, staging moves its baseline forward for the items that
+   went over. The next sync sends only the next changes.
+
+Items are matched by slug and path, never by ID, because the IDs differ
+between the two sites. Images are matched by their file name in uploads. The
+site address is swapped too: a link to the staging site becomes a link to
+production.
+
+An item that you removed on staging is **not** removed on production. The log
+shows it once, and you remove it by hand. Renaming a slug counts as a remove
+plus a new item.
+
+### Run it
+
+In GitHub: **Actions → Cloudways → Run workflow**.
+
+1. `content-diff`: what changed on staging. Changes nothing.
+2. `content-preview`: what would happen on production, with the conflicts.
+   Changes nothing.
+3. `content-sync`: a database backup of production, then the changes.
+
+With WP-CLI, on the servers:
+
+```bash
+wp sgwrd content diff                   # staging
+wp sgwrd content export ~/sync          # staging
+wp sgwrd content import ~/sync --dry-run   # production, after you copy the folder
+wp sgwrd content import ~/sync          # production
+wp sgwrd content accept ~/sync          # staging, with result.json from production
+```
+
+### Set up staging in the workflow
+
+The workflow needs two more secrets for the staging app. Add them in GitHub
+under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+| --- | --- |
+| `CW_STAGING_SSH_USER` | The SSH user of the staging application |
+| `CW_STAGING_APP_PATH` | `applications/<staging-app>/public_html` |
+
+Put the same public key on the staging application as on production. Then the
+workflow uses the same private key. A staging app on another server needs
+`CW_STAGING_SSH_HOST` too, and a different key needs `CW_STAGING_SSH_KEY`.
+
+Every other action gets a `target` choice: `production` or `staging`. So you
+can deploy and test a migration on staging first.
+
+### Sync or migration?
+
+| Use the sync | Use a migration |
+| --- | --- |
+| You made the change by hand on staging | The change is part of a feature in Git |
+| Pages, menus, settings | Anything you can write in PHP |
+| Once | On every site that gets the feature, in the same way |
 
 ---
 
