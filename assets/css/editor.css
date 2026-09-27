@@ -79,9 +79,6 @@
  * preview only. A click now selects the block, and the front end is not
  * touched.
  *
- * The theme blocks show no preview at all ("renderPreview": false in each
- * block.json). This rule is for a block that turns its preview back on.
- *
  * .acf-block-preview holds only the preview. The fields sit outside it, so
  * their inputs and buttons keep working.
  */

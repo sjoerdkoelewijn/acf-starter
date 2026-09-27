@@ -127,26 +127,27 @@ inner blocks changes with each WooCommerce release.
 
 ### Editing a block
 
-The blocks are **ACF Blocks V3**, and they show **no preview** in the editor.
-Each block is a placeholder with its icon, its title and an **Edit block**
-button. The button opens the fields in the Expanded Editor, a large window
-with room for repeaters. The fields also show in the sidebar when the block is
-selected. The page itself you see on the front end.
+The blocks are **ACF Blocks V3**. The editor shows each block as a live
+preview, so you see the page as it will look. The **edit** button in the block
+toolbar opens the fields in the Expanded Editor, a large window with room for
+repeaters. The fields also show in the sidebar when the block is selected.
+
+In the preview, links, buttons and form fields do nothing. A click selects the
+block, so you never leave the page or fill a cart by accident while you edit.
+The front end is not affected. See the end of `assets/css/editor.css`.
 
 This is set in the `"acf"` key of each `block.json`:
 
 ```json
 "acf": {
   "blockVersion": 3,
-  "renderPreview": false,
+  "renderPreview": true,
   "renderTemplate": "render.php"
 }
 ```
 
-Why no preview: a preview is full of live links and buttons, and a stray
-click takes you off the page while you edit. To give one block its preview
-back, set `"renderPreview": true`. Its links then do nothing in the editor,
-see the end of `assets/css/editor.css`.
+Set `"renderPreview": false` to show a block as a plain placeholder with an
+**Edit block** button instead of a preview.
 
 Why V3 is written down: ACF PRO 6.8.9 made V3 the default on WordPress 7.1,
 and the old V2 "edit mode", with the form in the canvas, does not exist in

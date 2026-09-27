@@ -38,7 +38,7 @@
   },
   "acf": {
     "blockVersion": 3,
-    "renderPreview": false,
+    "renderPreview": true,
     "renderTemplate": "render.php"
   }
 }
