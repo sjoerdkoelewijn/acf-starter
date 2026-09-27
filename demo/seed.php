@@ -692,7 +692,7 @@ $home .= sgwrd_demo_block(
 			'background_media' => array( 'image', 'field_sgwrd_hero_media' ),
 			'image'            => array( sgwrd_demo_pick( '', 'landscape' ), 'field_sgwrd_hero_image' ),
 			'overlay_opacity'  => array( 45, 'field_sgwrd_hero_overlay' ),
-			'size'             => array( 'large', 'field_sgwrd_hero_size' ),
+			'size'             => array( 'medium', 'field_sgwrd_hero_size' ),
 		),
 		sgwrd_demo_rows(
 			'buttons',
@@ -753,7 +753,7 @@ $home .= sgwrd_demo_block(
 		'heading'  => array( 'Featured', 'field_sgwrd_pg_heading' ),
 		'source'   => array( 'featured', 'field_sgwrd_pg_source' ),
 		'count'    => array( 4, 'field_sgwrd_pg_count' ),
-		'columns'  => array( '4', 'field_sgwrd_pg_columns' ),
+		'columns'  => array( '2', 'field_sgwrd_pg_columns' ),
 		'link'     => array(
 			array(
 				'title'  => 'All products',
@@ -818,7 +818,7 @@ $home .= sgwrd_demo_block(
 		'heading' => array( 'New in', 'field_sgwrd_pg_heading' ),
 		'source'  => array( 'recent', 'field_sgwrd_pg_source' ),
 		'count'   => array( 4, 'field_sgwrd_pg_count' ),
-		'columns' => array( '4', 'field_sgwrd_pg_columns' ),
+		'columns' => array( '2', 'field_sgwrd_pg_columns' ),
 	),
 	array( 'align' => 'wide' )
 );
@@ -1083,6 +1083,37 @@ sgwrd_demo_say( 'primary, footer and legal' );
  * 6. Theme settings
  * ---------------------------------------------------------------------------
  */
+
+/*
+ * ---------------------------------------------------------------------------
+ * Footer widgets
+ * ---------------------------------------------------------------------------
+ *
+ * When a theme is switched on, WordPress moves the old widgets into its first
+ * widget area. Here that dumped Archives and Categories into the footer. The
+ * demo footer holds none, so they go to Inactive Widgets. Nothing is deleted:
+ * you can drag them back under Appearance > Widgets.
+ */
+
+WP_CLI::log( 'Footer widgets' );
+
+$sgwrd_sidebars = wp_get_sidebars_widgets();
+
+if ( ! empty( $sgwrd_sidebars['footer'] ) ) {
+	$sgwrd_sidebars['wp_inactive_widgets'] = array_merge(
+		(array) ( $sgwrd_sidebars['wp_inactive_widgets'] ?? array() ),
+		(array) $sgwrd_sidebars['footer']
+	);
+
+	sgwrd_demo_say( count( $sgwrd_sidebars['footer'] ) . ' widget(s) moved to Inactive Widgets' );
+
+	$sgwrd_sidebars['footer'] = array();
+	wp_set_sidebars_widgets( $sgwrd_sidebars );
+} else {
+	sgwrd_demo_say( 'the footer is already empty' );
+}
+
+unset( $sgwrd_sidebars );
 
 WP_CLI::log( 'Theme settings' );
 

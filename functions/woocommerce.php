@@ -99,7 +99,10 @@ remove_action( 'wp_footer', 'woocommerce_demo_store' );
  */
 function sgwrd_product_loop_start() {
 
-	return '<ul class="products product-grid">';
+	// Keep the column count as a class, so the CSS can follow it.
+	$columns = max( 1, (int) wc_get_loop_prop( 'columns', 4 ) );
+
+	return '<ul class="products product-grid columns-' . esc_attr( (string) $columns ) . '">';
 }
 add_filter( 'woocommerce_product_loop_start', 'sgwrd_product_loop_start' );
 

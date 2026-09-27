@@ -65,24 +65,31 @@ add_action( 'wp_enqueue_scripts', 'sgwrd_enqueue_assets' );
 /**
  * Load the editor stylesheets.
  *
- * The editor gets the front end stylesheet as well as the editor one. An ACF
+ * The editor gets the front end stylesheets as well as the editor one. An ACF
  * block runs in preview mode, so the editor shows the real markup. Without the
- * front end CSS that markup would have no design at all.
+ * front end CSS that markup would have no design at all. The shop stylesheet
+ * comes too, because the product grid block prints WooCommerce markup.
  *
  * WordPress rewrites the selectors so the rules stay inside the editor canvas.
  * See the note at the top of assets/css/editor.css.
  *
- * add_editor_style() needs a path that is relative to the theme folder. The
- * version query keeps the editor from caching an old file.
+ * Give add_editor_style() plain paths, relative to the theme folder. Never add
+ * a version query: WordPress checks that each path is a real file, and a path
+ * with "?ver=" in it is not, so the stylesheet is silently dropped. There is
+ * no cache to bust anyway, because the editor reads the file contents inline.
  */
 function sgwrd_editor_styles() {
 
-	add_editor_style(
-		array(
-			'assets/css/style.css?ver=' . sgwrd_asset_version( 'assets/css/style.css' ),
-			'assets/css/editor.css?ver=' . sgwrd_asset_version( 'assets/css/editor.css' ),
-		)
-	);
+	$styles = array( 'assets/css/style.css' );
+
+	if ( sgwrd_has_woocommerce() ) {
+		$styles[] = 'assets/css/woocommerce.css';
+	}
+
+	// Last, so its editor only rules win.
+	$styles[] = 'assets/css/editor.css';
+
+	add_editor_style( $styles );
 }
 add_action( 'after_setup_theme', 'sgwrd_editor_styles', 20 );
 

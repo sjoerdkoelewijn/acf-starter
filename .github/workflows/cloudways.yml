@@ -35,6 +35,7 @@ on:
           - seed
           - seed-fresh
           - purge
+          - diagnose
           - wp
       wp_command:
         description: "For action 'wp': the WP-CLI command, without the word wp"
@@ -291,8 +292,15 @@ jobs:
 
             purge)
               ssh cloudways "cd '$app' && wp cache flush && wp transient delete --all && wp rewrite flush"
-              echo
-              echo "::notice::Varnish is not cleared from here. Purge it in the Cloudways panel, under Application Settings."
+              if ssh cloudways "cd '$app' && wp cli has-command 'breeze purge'"; then
+                ssh cloudways "cd '$app' && wp breeze purge --cache=all" && echo "Breeze and Varnish purged."
+              else
+                echo "::notice::Breeze is not here, so Varnish is not cleared. Purge it in the Cloudways panel."
+              fi
+              ;;
+
+            diagnose)
+              ssh cloudways "cd '$app' && wp eval-file '$theme/demo/diagnose.php'"
               ;;
 
             wp)

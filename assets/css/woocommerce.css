@@ -153,26 +153,39 @@
 	float: inline-end;
 }
 
+/*
+ * Two products in a row on a telephone, which is what a shop shows there.
+ * From a tablet up the grid takes the column count that the block or the
+ * shop page sets: 2, 3 or 4. The count always wins, so a 2 column block
+ * never turns into 3 on a mid size screen.
+ */
 .product-grid {
 	clear: both;
 	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(var(--grid-min), 1fr));
-	gap: var(--s-4) var(--s-3);
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--s-4) var(--s-2);
 	margin: var(--s-3) 0 0;
 	padding: 0;
 	list-style: none;
 }
 
-@media (min-width: 62em) {
+@media (min-width: 48em) {
 
-	.columns-2 .product-grid,
-	.product-grid.columns-2 { grid-template-columns: repeat(2, 1fr); }
+	.product-grid {
+		column-gap: var(--s-3);
+	}
 
 	.columns-3 .product-grid,
-	.product-grid.columns-3 { grid-template-columns: repeat(3, 1fr); }
+	.product-grid.columns-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 	.columns-4 .product-grid,
-	.product-grid.columns-4 { grid-template-columns: repeat(4, 1fr); }
+	.product-grid.columns-4 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (min-width: 62em) {
+
+	.columns-4 .product-grid,
+	.product-grid.columns-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
 /* ------------------------------------------------------------------------- *

@@ -45,7 +45,7 @@
 
 	/* Width. */
 	--w-content: var(--wp--style--global--content-size, 46rem);
-	--w-wide: var(--wp--style--global--wide-size, 80rem);
+	--w-wide: var(--wp--style--global--wide-size, 90rem);
 	--w-gutter: var(--s-3);
 
 	/* Shape. */
@@ -210,9 +210,20 @@ td {
 }
 
 /*
- * The block editor content flow. A block is a normal child of the main area,
- * with the content width. A wide block or a full block breaks out of it.
+ * One layout width for the whole site: the header, the content and the
+ * footer all stop at --w-wide (1440px). A full width block, such as the hero,
+ * goes from edge to edge.
+ *
+ * Inside that width, running text keeps --w-content, because a line of 1440px
+ * is too long to read. A theme block is wide by default, so it uses the whole
+ * layout width.
  */
+
+/* A page that starts with a full width block meets the header with no gap. */
+.site-main:has(> .entry:first-child > .entry__content:first-child > .alignfull:first-child) {
+	padding-block-start: 0;
+}
+
 .entry__content > *,
 .site-main > .block {
 	max-width: var(--w-content);
@@ -646,7 +657,8 @@ label {
 	margin: 0;
 }
 
-.entry {
+.entry__header,
+.entry__media {
 	max-width: var(--w-content);
 	margin-inline: auto;
 }
@@ -812,9 +824,10 @@ label {
 	border-radius: 0;
 }
 
-.hero--cover.hero--small { min-height: 40vh; }
-.hero--cover.hero--medium { min-height: 60vh; }
-.hero--cover.hero--large { min-height: 82vh; }
+/* The height follows the window, between a floor and a ceiling. */
+.hero--cover.hero--small { min-height: clamp(18rem, 40vh, 26rem); }
+.hero--cover.hero--medium { min-height: clamp(22rem, 55vh, 34rem); }
+.hero--cover.hero--large { min-height: clamp(28rem, 72vh, 44rem); }
 
 .hero__background {
 	position: absolute;
@@ -918,9 +931,9 @@ label {
 	border-radius: 0;
 }
 
-.hero-split--small .hero-split__panel { min-height: 30vh; }
-.hero-split--medium .hero-split__panel { min-height: 46vh; }
-.hero-split--large .hero-split__panel { min-height: 64vh; }
+.hero-split--small .hero-split__panel { min-height: clamp(16rem, 30vh, 22rem); }
+.hero-split--medium .hero-split__panel { min-height: clamp(20rem, 44vh, 30rem); }
+.hero-split--large .hero-split__panel { min-height: clamp(24rem, 60vh, 38rem); }
 
 .hero-split__background {
 	position: absolute;

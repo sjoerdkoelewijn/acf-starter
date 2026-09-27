@@ -52,3 +52,22 @@
 .hero__video {
 	display: none;
 }
+
+/*
+ * Show where each theme block starts and stops. The front end has no such
+ * line. In the editor it turns a long page into clear sections, so you can
+ * see at a glance which block is which and click the right one.
+ */
+[class*="wp-block-acf-"] {
+	outline: 1px dashed var(--c-line);
+	outline-offset: 6px;
+}
+
+[class*="wp-block-acf-"]:hover {
+	outline-color: var(--c-muted);
+}
+
+/* The editor draws its own blue outline on the selected block. Let that win. */
+[class*="wp-block-acf-"].is-selected {
+	outline: 0;
+}

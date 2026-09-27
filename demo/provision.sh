@@ -152,10 +152,20 @@ say "Finishing"
 wp rewrite flush --quiet
 wp cache flush --quiet 2>/dev/null || true
 wp transient delete --all --quiet 2>/dev/null || true
-ok "caches cleared"
+ok "WordPress caches cleared"
+
+# Cloudways runs Breeze, which also clears Varnish. Use it when it is there.
+if wp cli has-command "breeze purge" >/dev/null 2>&1; then
+	if wp breeze purge --cache=all >/dev/null 2>&1; then
+		ok "Breeze and Varnish purged"
+	else
+		warn "Breeze did not purge. Purge Varnish in the Cloudways panel."
+	fi
+else
+	warn "no Breeze here. Purge the page cache by hand if the host has one."
+fi
 
 printf '\n\033[32mDone.\033[0m  %s\n\n' "$(wp option get home)"
 printf 'Next, by hand:\n'
 printf '  - Upload a logo at Appearance > Customize > Site Identity.\n'
-printf '  - On Cloudways, purge Varnish and the object cache.\n'
 printf '  - Put the demo behind a password if it is reachable from the internet.\n\n'
