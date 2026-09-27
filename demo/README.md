@@ -255,6 +255,15 @@ bash wp-content/themes/acf-starter/demo/provision.sh --fresh
 
 ## What you get
 
+**Photos.** The seeder looks in two places: the `demo/images` folder on the
+server, and the **media library**. Uploading in **Media → Add new** is the
+easy way — no SFTP. Run the demo again and the photos hang themselves on the
+products. A photo with the same name in `demo/images` wins over one in the
+library. With no photos at all the demo still builds, with grey placeholders.
+
+A `--fresh` rebuild deletes only what the seeder made. Photos you uploaded
+yourself are never touched.
+
 **Products.** Twelve products in four categories, from `demo/products.csv`.
 Two are on sale, four are featured, one is out of stock. Every fourth product
 has its own questions, so you can see the extra product tab.
@@ -295,7 +304,7 @@ Edit `demo/products.csv`. The columns are:
 | `stock` | `0` makes the product sold out. |
 | `short_description` | Shows under the price. Quote it if it holds a comma. |
 | `description` | HTML is allowed. Quote it. |
-| `images` | File names from `demo/images/`, split by `\|`. |
+| `images` | File names, split by `\|`. From `demo/images/` or from the media library. Leave it empty to let the seeder choose. |
 
 Add a category by editing the `$sgwrd_cat_spec` array near the top of
 `demo/seed.php`.

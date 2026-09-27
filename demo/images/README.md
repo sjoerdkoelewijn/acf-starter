@@ -8,10 +8,15 @@ cell, split by a pipe:
 
     AS-001,Merino crew jumper,clothing,129.00,,1,12,...,jumper-front.jpg|jumper-back.jpg
 
-**You do not have to fill that column first.** When the column is empty, or
-when the file it names is not here, the seeder takes the next photo in this
-folder and moves on. So you can drop your photos in, run the script, and edit
-the names later.
+**You do not have to use this folder at all.** The seeder also reads the
+WordPress media library, so uploading under **Media → Add new** works just as
+well and needs no SFTP. A file here wins over a library photo with the same
+name.
+
+**You do not have to fill the CSV column first either.** When the column is
+empty, or when the file it names is nowhere, the seeder takes the next photo
+it has and moves on. So drop your photos in, run the script, and edit the
+names later.
 
 With no photos at all the demo still builds. Each card then shows the grey
 placeholder box from the theme CSS.

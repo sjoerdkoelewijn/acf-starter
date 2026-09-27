@@ -295,31 +295,82 @@ if ( $sgwrd_fresh ) {
 
 WP_CLI::log( 'Images' );
 
+/*
+ * The seeder takes photos from two places, and it looks in both:
+ *
+ *   demo/images        Files you put on the server. The seeder imports them.
+ *   The media library  Photos you uploaded in the WordPress admin. Much
+ *                      easier: drag them in and run the seeder again.
+ *
+ * Both end up in one list, keyed by file name, so the "images" column in
+ * products.csv can name a photo from either place.
+ */
+
 $sgwrd_files = array();
 
+// Files on disk.
 if ( is_dir( $sgwrd_images ) ) {
 	foreach ( (array) glob( $sgwrd_images . '/*.{jpg,jpeg,png,webp,avif,JPG,JPEG,PNG,WEBP}', GLOB_BRACE ) as $file ) {
-		$sgwrd_files[ basename( $file ) ] = $file;
+		$sgwrd_files[ basename( $file ) ] = array( 'file' => $file );
 	}
+}
+
+$sgwrd_on_disk = count( $sgwrd_files );
+
+// Photos already in the media library.
+$sgwrd_library = get_posts(
+	array(
+		'post_type'      => 'attachment',
+		'post_status'    => 'inherit',
+		'post_mime_type' => 'image',
+		'posts_per_page' => -1,
+		'orderby'        => 'date',
+		'order'          => 'ASC',
+		'fields'         => 'ids',
+	)
+);
+
+$sgwrd_in_library = 0;
+
+foreach ( $sgwrd_library as $sgwrd_id ) {
+
+	$sgwrd_path = get_attached_file( $sgwrd_id );
+
+	if ( ! $sgwrd_path ) {
+		continue;
+	}
+
+	$sgwrd_name = basename( $sgwrd_path );
+
+	// A file on disk with the same name wins, so demo/images stays in charge.
+	if ( isset( $sgwrd_files[ $sgwrd_name ] ) ) {
+		continue;
+	}
+
+	$sgwrd_files[ $sgwrd_name ] = array( 'id' => (int) $sgwrd_id );
+	++$sgwrd_in_library;
 }
 
 $sgwrd_pool = array_values( $sgwrd_files );
 
 if ( ! $sgwrd_pool ) {
-	sgwrd_demo_say( 'demo/images is empty. The demo still builds, with grey placeholders.' );
+	sgwrd_demo_say( 'No photos found. The demo still builds, with grey placeholders.' );
+	sgwrd_demo_say( 'Upload photos in Media, or put them in demo/images, and run this again.' );
 } else {
-	sgwrd_demo_say( count( $sgwrd_pool ) . ' image(s) found' );
+	sgwrd_demo_say( sprintf( '%d photo(s): %d in demo/images, %d in the media library', count( $sgwrd_pool ), $sgwrd_on_disk, $sgwrd_in_library ) );
 }
 
+unset( $sgwrd_library, $sgwrd_id, $sgwrd_path, $sgwrd_name );
+
 /**
- * Get the attachment ID for a file name from the CSV.
+ * Get the attachment ID for a photo.
  *
- * When the name is not in demo/images, the script falls back to the next
- * image in the folder, so your own photos are used even before you edit the
- * CSV. It says so when it does.
+ * The name comes from the "images" column in products.csv. When the name is
+ * empty, or the photo is not there, the seeder takes the next photo in the
+ * list and moves on. So your photos are used even before you edit the CSV.
  *
  * @param string $name File name from the CSV. May be empty.
- * @return int
+ * @return int Attachment ID, or 0 when there is no photo at all.
  */
 function sgwrd_demo_pick( $name ) {
 
@@ -327,20 +378,26 @@ function sgwrd_demo_pick( $name ) {
 
 	static $next = 0;
 
-	$name = trim( (string) $name );
+	$name  = trim( (string) $name );
+	$entry = null;
 
 	if ( $name && isset( $sgwrd_files[ $name ] ) ) {
-		return sgwrd_demo_media( $sgwrd_files[ $name ] );
+		$entry = $sgwrd_files[ $name ];
+	} elseif ( $sgwrd_pool ) {
+		$entry = $sgwrd_pool[ $next % count( $sgwrd_pool ) ];
+		++$next;
 	}
 
-	if ( ! $sgwrd_pool ) {
+	if ( ! $entry ) {
 		return 0;
 	}
 
-	$file = $sgwrd_pool[ $next % count( $sgwrd_pool ) ];
-	++$next;
+	// Already in the library: use it as it is, and import nothing.
+	if ( isset( $entry['id'] ) ) {
+		return (int) $entry['id'];
+	}
 
-	return sgwrd_demo_media( $file );
+	return sgwrd_demo_media( $entry['file'] );
 }
 
 /*
