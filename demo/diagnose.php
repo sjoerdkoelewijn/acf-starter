@@ -103,6 +103,10 @@ if ( ! $sgwrd_home ) {
 
 sgwrd_diag_row( 'front page id', $sgwrd_home );
 
+// A shortcode inside a block reads the global post, as it would on a page view.
+$GLOBALS['post'] = get_post( $sgwrd_home ); // phpcs:ignore WordPress.WP.GlobalVariablesOverride
+setup_postdata( $GLOBALS['post'] );
+
 $sgwrd_render = function_exists( 'acf_rendered_block' );
 
 if ( ! $sgwrd_render ) {

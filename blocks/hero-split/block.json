@@ -33,7 +33,7 @@
   "attributes": {
     "align": {
       "type": "string",
-      "default": "full"
+      "default": "wide"
     }
   },
   "acf": {

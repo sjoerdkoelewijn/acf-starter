@@ -404,6 +404,15 @@ foreach ( $sgwrd_files as $sgwrd_entry ) {
 	$sgwrd_pool[ $sgwrd_entry['shape'] ][] = $sgwrd_entry;
 }
 
+/*
+ * `wp eval-file` runs this file inside a function, not at the top level. So a
+ * plain variable here is local, and the "global" line in sgwrd_demo_pick()
+ * would see an empty list: the photos are found but never handed out. Put
+ * both lists in $GLOBALS by hand.
+ */
+$GLOBALS['sgwrd_files'] = $sgwrd_files;
+$GLOBALS['sgwrd_pool']  = $sgwrd_pool;
+
 if ( ! $sgwrd_pool['any'] ) {
 	sgwrd_demo_say( 'No photos found. The demo still builds, with grey placeholders.' );
 	sgwrd_demo_say( 'Upload photos in Media, or put them in demo/images, and run this again.' );
@@ -809,7 +818,7 @@ $home .= sgwrd_demo_block(
 		),
 		array( 'size' => array( 'medium', 'field_sgwrd_hs_size' ) )
 	),
-	array( 'align' => 'full' )
+	array( 'align' => 'wide' )
 );
 
 $home .= sgwrd_demo_block(
