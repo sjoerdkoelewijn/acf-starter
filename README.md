@@ -125,16 +125,33 @@ inner blocks changes with each WooCommerce release.
 | Recent posts | `acf/recent-posts` | The newest posts. |
 | Product grid | `acf/product-grid` | WooCommerce products in a grid. |
 
-### Edit mode and preview
+### Editing a block
 
-Every theme block starts in **edit mode**: the fields sit in the editor canvas.
-The pencil and eye icons in the block toolbar switch between the fields and the
-preview. To change the start mode of one block, set `"mode"` under `"acf"` in
-its `block.json` to `edit`, `preview` or `auto`.
+The blocks are **ACF Blocks V3**, and they show **no preview** in the editor.
+Each block is a placeholder with its icon, its title and an **Edit block**
+button. The button opens the fields in the Expanded Editor, a large window
+with room for repeaters. The fields also show in the sidebar when the block is
+selected. The page itself you see on the front end.
 
-In the preview, links, buttons and form fields do nothing. A click selects the
-block, so you never leave the page or fill a cart by accident. The front end is
-not affected. See the end of `assets/css/editor.css`.
+This is set in the `"acf"` key of each `block.json`:
+
+```json
+"acf": {
+  "blockVersion": 3,
+  "renderPreview": false,
+  "renderTemplate": "render.php"
+}
+```
+
+Why no preview: a preview is full of live links and buttons, and a stray
+click takes you off the page while you edit. To give one block its preview
+back, set `"renderPreview": true`. Its links then do nothing in the editor,
+see the end of `assets/css/editor.css`.
+
+Why V3 is written down: ACF PRO 6.8.9 made V3 the default on WordPress 7.1,
+and the old V2 "edit mode", with the form in the canvas, does not exist in
+V3. The theme states the version, so it does not change under you with an
+ACF update.
 
 ### The hero
 

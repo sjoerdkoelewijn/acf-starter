@@ -93,7 +93,7 @@ function sgwrd_demo_block( $name, $fields, $attrs = array() ) {
 		$data[ '_' . $field_name ] = $pair[1];
 	}
 
-	// No "mode" here: the block starts in the mode its block.json sets.
+	// No "mode" here. How a block shows in the editor is set in its block.json.
 	$json = array_merge(
 		array(
 			'name' => $name,

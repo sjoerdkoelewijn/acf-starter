@@ -36,7 +36,8 @@
     }
   },
   "acf": {
-    "mode": "edit",
+    "blockVersion": 3,
+    "renderPreview": false,
     "renderTemplate": "render.php"
   }
 }

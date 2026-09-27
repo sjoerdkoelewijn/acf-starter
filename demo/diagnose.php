@@ -63,6 +63,32 @@ foreach ( $sgwrd_editor as $sgwrd_url ) {
 }
 
 /* --------------------------------------------------------------------- */
+sgwrd_diag_head( 'Block types as ACF registered them' );
+
+// What the editor really gets, straight from ACF. The keys differ between ACF
+// versions, so print every setting whose name is about the version or the
+// preview.
+if ( function_exists( 'acf_get_block_types' ) ) {
+	foreach ( acf_get_block_types() as $sgwrd_type_name => $sgwrd_type ) {
+		if ( ! str_starts_with( (string) $sgwrd_type_name, 'acf/' ) ) {
+			continue;
+		}
+
+		$sgwrd_bits = array();
+
+		foreach ( (array) $sgwrd_type as $sgwrd_key => $sgwrd_value ) {
+			if ( preg_match( '/version|preview|mode/i', (string) $sgwrd_key ) && ! is_array( $sgwrd_value ) ) {
+				$sgwrd_bits[] = $sgwrd_key . '=' . var_export( $sgwrd_value, true );
+			}
+		}
+
+		sgwrd_diag_row( $sgwrd_type_name, implode( '  ', $sgwrd_bits ) );
+	}
+} else {
+	sgwrd_diag_row( 'acf_get_block_types', 'missing' );
+}
+
+/* --------------------------------------------------------------------- */
 sgwrd_diag_head( 'Products' );
 
 $sgwrd_products = get_posts(
@@ -114,7 +140,7 @@ if ( ! $sgwrd_render ) {
 }
 
 WP_CLI::log( '' );
-WP_CLI::log( sprintf( '  %-18s %-7s %-8s %-6s %-9s %-9s %s', 'block', 'align', 'mode', 'image', 'front', 'editor', 'notes' ) );
+WP_CLI::log( sprintf( '  %-18s %-7s %-6s %-9s %-9s %s', 'block', 'align', 'image', 'front', 'editor', 'notes' ) );
 
 foreach ( parse_blocks( get_post_field( 'post_content', $sgwrd_home ) ) as $sgwrd_block ) {
 
@@ -151,11 +177,9 @@ foreach ( parse_blocks( get_post_field( 'post_content', $sgwrd_home ) ) as $sgwr
 
 	WP_CLI::log(
 		sprintf(
-			'  %-18s %-7s %-8s %-6s %-9s %-9s %s',
+			'  %-18s %-7s %-6s %-9s %-9s %s',
 			$sgwrd_name,
 			$sgwrd_attrs['align'] ?? '-',
-			// No stored mode means the block.json default applies.
-			$sgwrd_attrs['mode'] ?? '(default)',
 			$sgwrd_image,
 			strlen( $sgwrd_front ) . 'b',
 			strlen( $sgwrd_editor ) . 'b',
