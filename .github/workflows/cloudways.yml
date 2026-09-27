@@ -36,6 +36,8 @@ on:
           - seed-fresh
           - purge
           - diagnose
+          - migrate-status
+          - migrate
           - wp
       wp_command:
         description: "For action 'wp': the WP-CLI command, without the word wp"
@@ -201,7 +203,7 @@ jobs:
           echo "WP-CLI $(ssh cloudways 'wp --version' | awk '{print $2}')"
 
       - name: Send the theme
-        if: inputs.action == 'deploy' || inputs.action == 'provision'
+        if: inputs.action == 'deploy' || inputs.action == 'provision' || inputs.action == 'migrate'
         env:
           CW_APP_PATH: ${{ secrets.CW_APP_PATH }}
         run: |
@@ -301,6 +303,45 @@ jobs:
 
             diagnose)
               ssh cloudways "cd '$app' && wp eval-file '$theme/demo/diagnose.php'"
+              ;;
+
+            migrate-status)
+              # Look only. Nothing changes.
+              ssh cloudways "cd '$app' && wp sgwrd migrate status && wp sgwrd migrate run --dry-run"
+              ;;
+
+            migrate)
+              # The theme with the new migrations went up in the step before.
+              # First a database backup, next to public_html and so out of
+              # reach of the web. The run stops when the backup fails.
+              ssh cloudways "cd '$app' && bash -s" <<'REMOTE'
+                set -euo pipefail
+                # A WP-CLI error here stops the script, because of set -e.
+                plan="$(wp sgwrd migrate run --dry-run)"
+                printf '%s\n' "$plan"
+                if ! printf '%s\n' "$plan" | grep -q 'Would run'; then
+                  echo "Nothing to do. All migrations ran."
+                  exit 0
+                fi
+                backups="$(cd .. && pwd)/db-backups"
+                mkdir -p "$backups"
+                chmod 700 "$backups"
+                file="$backups/before-migrate-$(date -u +%Y%m%d-%H%M%S).sql.gz"
+                if ! wp db export - | gzip > "$file" || ! gzip -t "$file"; then
+                  rm -f "$file"
+                  echo "::error::The database backup failed, so no migration ran."
+                  exit 1
+                fi
+                echo "Backup: $file ($(du -h "$file" | cut -f1))"
+                # Keep the last ten.
+                ls -1t "$backups"/before-migrate-*.sql.gz | tail -n +11 | xargs -r rm -f
+                wp sgwrd migrate run
+                wp sgwrd migrate status
+                wp cache flush
+                if wp cli has-command 'breeze purge'; then
+                  wp breeze purge --cache=all
+                fi
+          REMOTE
               ;;
 
             wp)

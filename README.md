@@ -60,6 +60,7 @@ acf-starter/
 │       ├── block.json       The block definition.
 │       └── render.php       The block markup.
 ├── functions/               One file for each concern. See the table below.
+├── migrations/              Content migrations. See "Content migrations".
 ├── template-parts/          Small pieces that the templates share.
 ├── woocommerce/             The two WooCommerce template overrides.
 ├── functions.php            Loads the files in /functions. No logic here.
@@ -79,6 +80,7 @@ acf-starter/
 | `editor.php` | The block allow list, the block category and the block styles. |
 | `admin.php` | Makes the WordPress admin smaller. |
 | `acf.php` | ACF JSON sync, the block loader and the options page. |
+| `migrations.php` | Content migrations: the `wp sgwrd migrate` command and its helpers. |
 | `template-tags.php` | Small helpers for the templates and the blocks. |
 | `shortcodes.php` | `[year]` and `[site_name]`. |
 | `woocommerce.php` | The shop. The file stops at the top when WooCommerce is off. |
@@ -466,8 +468,8 @@ After every push or pull, look at the admin bar on both sites.
 
 Never push the database from staging to production on a shop. Production gets
 new orders, customers and stock while you work on staging. A database push
-overwrites them. Push the code only (the workflow or Git), and make content
-changes on production.
+overwrites them. Push the code only (the workflow or Git). Make content
+changes on production, or put them in a content migration (next section).
 
 ### Limits
 
@@ -485,6 +487,89 @@ changes on production.
 | `sgwrd_production_host` | The production domain for the second guard. |
 | `sgwrd_mail_guard` | Return `false` to send mail on staging. |
 | `sgwrd_staging_mail_to` | The redirect address. |
+
+---
+
+## Content migrations
+
+Some content cannot wait on the live site: a new feature needs a page, or the
+menu changes. Do not click it in by hand twice, and never push the database.
+Write a migration: a small PHP file that makes the change.
+
+A migration adds to the database of the site it runs on. It never replaces
+it. Orders, customers and stock stay as they are.
+
+### How it goes
+
+1. Build the feature on staging.
+2. Write a migration for the content it needs, in `migrations/`.
+3. Commit and push. Run it on staging and look at the result.
+4. At the release, run the same migration on production.
+
+Each migration runs once per site. The list of migrations that ran is in the
+option `sgwrd_migrations`, so it moves with the database. After a pull from
+production, staging knows what already ran there.
+
+### Write one
+
+Copy `migrations/_example.php` to a name that starts with the date, for
+example `migrations/2026-09-27-add-outlet-page.php`. The name sets the order.
+A name that starts with `_` never runs. Put project migrations in the child
+theme (`<child>/migrations/`). The theme reads both folders.
+
+```php
+<?php
+defined( 'ABSPATH' ) || exit;
+
+return function () {
+	$page = sgwrd_migrate_page( 'outlet', array( 'title' => 'Outlet' ) );
+	sgwrd_migrate_menu_item( 'primary', 'Outlet', $page, array( 'position' => 2 ) );
+};
+```
+
+The helpers look first and make only what is not there. So a second run
+changes nothing, and a migration that failed halfway can run again.
+
+| Helper | What it does |
+| --- | --- |
+| `sgwrd_migrate_page( $slug, $args )` | Makes the page, or updates it. Only the keys you give are written: `title`, `content`, `status`, `parent`, `template`, `menu_order`, `meta`. |
+| `sgwrd_migrate_block( $name, $fields, $attrs )` | The markup of one ACF block, for the page content. |
+| `sgwrd_migrate_rows( $name, $key, $rows, $sub_keys )` | A repeater for `sgwrd_migrate_block()`. |
+| `sgwrd_migrate_menu_item( $menu, $title, $target, $args )` | Adds an item when the menu does not have it. `$menu` is a location or a menu name. `$target` is a post ID or a URL. `$args`: `parent` (the title of an item), `position`. |
+| `sgwrd_migrate_menu_location( $location, $menu )` | Shows a menu in a location. |
+| `sgwrd_migrate_menu( $menu )` | Finds a menu, or makes it. |
+
+For options and theme settings, use WordPress and ACF directly:
+`update_option()` and `update_field( $name, $value, 'option' )`.
+
+**A new menu.** Make it on the live site in Appearance → Menus, and give it
+no location. Visitors do not see it. At the release, a migration switches the
+location: `sgwrd_migrate_menu_location( 'primary', 'Main menu 2027' )`. The old
+menu stays, so you can switch back.
+
+### Run it
+
+| Where | How |
+| --- | --- |
+| GitHub | Actions → Cloudways → Run workflow → `migrate-status` first, then `migrate` |
+| Terminal | `wp sgwrd migrate status`, then `wp sgwrd migrate run` |
+
+`wp sgwrd migrate run --dry-run` shows what would run and changes nothing.
+`wp sgwrd migrate skip <name>` marks a migration as done without running it,
+for a change you already made by hand.
+
+The `migrate` action in the workflow does three things:
+
+1. It sends the theme to the server, with the new migrations.
+2. It makes a database backup in `db-backups/`, next to `public_html`, out of
+   reach of the web. It keeps the last ten. When the backup fails, nothing
+   runs.
+3. It runs the waiting migrations and clears the caches.
+
+A migration that fails stops the run. It is not marked as done, and the
+migrations after it wait. Fix it, push, and run again. To go back to the
+state before the run, restore the backup: in the Cloudways panel, or with
+`wp db import` in a terminal. The workflow does not allow `db import`.
 
 ---
 

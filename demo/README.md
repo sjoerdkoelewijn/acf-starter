@@ -205,6 +205,9 @@ Never put these in a chat, an issue or a commit.
 | `seed` | Rebuilds the demo content only. Faster. |
 | `seed-fresh` | Deletes the demo content and builds it again. Needs the tick box. |
 | `purge` | Clears the WordPress caches. |
+| `diagnose` | Prints what the theme sees: versions, blocks, products. Changes nothing. |
+| `migrate-status` | Shows which content migrations ran and which wait. Changes nothing. |
+| `migrate` | Deploy, a database backup, then the waiting content migrations. |
 | `wp` | Runs one WP-CLI command that you type. |
 
 Start with `status`. It proves the key, the path and WP-CLI all work, and it
