@@ -70,3 +70,28 @@
 	background: var(--wp-admin-theme-color, #3858e9) !important;
 	color: #fff !important;
 }
+
+/*
+ * ACF fields in the block sidebar.
+ *
+ * A field group gives some fields a width, so they sit side by side: an icon
+ * next to a title next to a text. That reads well in the Expanded Editor, but
+ * the block sidebar is too narrow for it, and the fields shrink to a few
+ * characters. In the sidebar only, stack every field at full width. The
+ * Expanded Editor is not inside .block-editor-block-inspector, so it keeps
+ * the side by side layout.
+ *
+ * !important is needed because ACF writes the width as an inline style.
+ */
+.block-editor-block-inspector .acf-field[data-width] {
+	width: 100% !important;
+	float: none !important;
+	clear: both !important;
+	border-left: 0 !important;
+}
+
+/* The row number column of a repeater wastes width in the sidebar. */
+.block-editor-block-inspector .acf-repeater .acf-row-handle.order {
+	width: 1.5rem;
+	padding: 0;
+}
