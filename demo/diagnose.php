@@ -162,8 +162,19 @@ foreach ( $sgwrd_products as $sgwrd_pid ) {
 	}
 }
 
+$sgwrd_with_reviews = 0;
+
+foreach ( $sgwrd_products as $sgwrd_pid ) {
+	$sgwrd_p = function_exists( 'wc_get_product' ) ? wc_get_product( $sgwrd_pid ) : null;
+
+	if ( $sgwrd_p && $sgwrd_p->get_review_count() > 0 ) {
+		++$sgwrd_with_reviews;
+	}
+}
+
 sgwrd_diag_row( 'published', count( $sgwrd_products ) );
 sgwrd_diag_row( 'with a photo', $sgwrd_with_image );
+sgwrd_diag_row( 'with reviews', $sgwrd_with_reviews );
 
 /* --------------------------------------------------------------------- */
 sgwrd_diag_head( 'Footer widgets' );

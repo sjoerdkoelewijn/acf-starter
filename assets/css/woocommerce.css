@@ -14,7 +14,7 @@
  *   3. The product grid
  *   4. The product card
  *   5. The single product
- *   6. Tabs and related products
+ *   6. Reviews, questions and related products
  *   7. Cart and checkout
  *   8. My account
  *   9. Forms and small parts
@@ -352,21 +352,50 @@
  * 5. The single product
  * ------------------------------------------------------------------------- */
 
+/*
+ * Photo on the left, product info on the right, both above the fold on a
+ * desktop. Everything else inside div.product (the breadcrumb, the reviews,
+ * the questions, the related products) takes the full row.
+ *
+ * On a telephone the photo comes first and the info below it.
+ */
 .single-product div.product {
 	display: grid;
+	grid-template-columns: minmax(0, 1fr);
 	gap: var(--s-4);
+	align-items: start;
 }
 
-.single-product .woocommerce-breadcrumb {
+.single-product div.product > * {
 	grid-column: 1 / -1;
 }
 
 @media (min-width: 48em) {
 
 	.single-product div.product {
-		grid-template-columns: 1.1fr 1fr;
-		align-items: start;
+		grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+		column-gap: var(--s-5);
 	}
+
+	.single-product div.product > .product-media {
+		grid-column: 1;
+	}
+
+	.single-product div.product > .summary {
+		grid-column: 2;
+	}
+}
+
+/* The photo, with the sale badge on it. */
+.product-media {
+	position: relative;
+}
+
+.product-media .onsale {
+	position: absolute;
+	inset-block-start: var(--s-2);
+	inset-inline-start: var(--s-2);
+	z-index: 3;
 }
 
 .woocommerce-product-gallery {
@@ -513,44 +542,68 @@
 }
 
 /* ------------------------------------------------------------------------- *
- * 6. Tabs and related products
+ * 6. Reviews, questions and related products
  * ------------------------------------------------------------------------- */
 
-.woocommerce-tabs,
-.related,
-.upsells,
-.up-sells {
-	grid-column: 1 / -1;
-	margin-block-start: var(--s-4);
-}
-
-.woocommerce-tabs .tabs {
+/* In the right column, next to the title. */
+.woocommerce-product-rating {
 	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-3);
-	margin: 0 0 var(--s-3);
-	padding: 0 0 var(--s-1);
-	border-bottom: var(--border);
-	list-style: none;
+	align-items: center;
+	gap: var(--s-1);
 }
 
-.woocommerce-tabs .tabs a {
-	display: block;
-	padding-block: var(--s-1);
-	text-decoration: none;
+.woocommerce-review-link,
+.product-rating--empty a {
+	font-size: var(--wp--preset--font-size--small, 0.875rem);
 	color: var(--c-muted);
+}
+
+.product-rating--empty {
+	margin: 0;
+}
+
+/* The long description and the details, lower in the right column. */
+.product-description,
+.product-details {
+	padding-block-start: var(--s-3);
+	border-top: var(--border);
+}
+
+.product-description > :first-child {
+	margin-block-start: 0;
+}
+
+.product-details__title {
+	margin-block-end: var(--s-1);
+	font-size: var(--wp--preset--font-size--small, 0.875rem);
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--c-muted);
+}
+
+.woocommerce-product-attributes th,
+.woocommerce-product-attributes td {
+	padding-inline: 0;
 	font-size: var(--wp--preset--font-size--small, 0.875rem);
 }
 
-.woocommerce-tabs .tabs .active a {
-	color: var(--c-text);
-	box-shadow: inset 0 -2px 0 var(--c-text);
+.woocommerce-product-attributes td p {
+	margin: 0;
 }
 
-.woocommerce-tabs .panel > h2:first-child {
-	display: none;
+/* The sections below the fold. */
+.product-section,
+.related,
+.upsells,
+.up-sells {
+	margin-block-start: var(--s-5);
+	padding-block-start: var(--s-4);
+	border-top: var(--border);
 }
 
+.product-section__title,
+.woocommerce-Reviews-title,
 .related > h2,
 .upsells > h2,
 .up-sells > h2,
@@ -559,14 +612,43 @@
 	font-size: var(--wp--preset--font-size--large, 1.25rem);
 }
 
+/* The questions sit left aligned in a product section, like the reviews. */
+.product-section .faq__inner {
+	max-width: var(--w-content);
+	margin-inline: 0;
+}
+
 /* Reviews. */
 
+.woocommerce-Reviews {
+	display: grid;
+	gap: var(--s-4);
+}
+
+@media (min-width: 62em) {
+
+	/* The reviews on the left, the form to write one on the right. */
+	.woocommerce-Reviews {
+		grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+		align-items: start;
+	}
+
+	.woocommerce-Reviews > .clear {
+		display: none;
+	}
+}
+
 .commentlist {
-	margin: 0 0 var(--s-3);
+	margin: 0;
 	padding: 0;
 	list-style: none;
 	display: grid;
 	gap: var(--s-3);
+}
+
+.commentlist .review {
+	padding-block-end: var(--s-3);
+	border-bottom: var(--border);
 }
 
 .comment_container {
@@ -579,6 +661,14 @@
 	border-radius: var(--radius-pill);
 }
 
+.comment-text .star-rating {
+	margin-block-end: 0.35rem;
+}
+
+.comment-text .description p {
+	margin: 0.35rem 0 0;
+}
+
 .woocommerce-review__author {
 	font-weight: 600;
 }
@@ -586,6 +676,64 @@
 .woocommerce-review__published-date {
 	color: var(--c-muted);
 	font-size: var(--wp--preset--font-size--small, 0.875rem);
+}
+
+.woocommerce-noreviews {
+	color: var(--c-muted);
+}
+
+#review_form_wrapper {
+	padding: var(--s-3);
+	border-radius: var(--radius-lg);
+	background: var(--c-surface);
+}
+
+#reply-title {
+	display: block;
+	margin-block-end: var(--s-2);
+	font-weight: 600;
+}
+
+/*
+ * The star picker. WooCommerce turns the rating select into five links. Its
+ * own stylesheet draws them as stars, and the theme removed that stylesheet,
+ * so draw them here.
+ */
+#review_form .stars {
+	margin: 0 0 var(--s-2);
+}
+
+#review_form .stars span {
+	display: inline-flex;
+	gap: 0.15rem;
+}
+
+#review_form .stars a {
+	position: relative;
+	width: 1.4rem;
+	height: 1.4rem;
+	overflow: hidden;
+	text-indent: -999em;
+}
+
+#review_form .stars a::before {
+	content: "\2605";
+	position: absolute;
+	inset: 0;
+	text-indent: 0;
+	font-size: 1.4rem;
+	line-height: 1;
+	color: var(--c-line);
+}
+
+#review_form .stars:hover a::before,
+#review_form .stars.selected a::before {
+	color: var(--c-text);
+}
+
+#review_form .stars a:hover ~ a::before,
+#review_form .stars.selected a.active ~ a::before {
+	color: var(--c-line);
 }
 
 /* ------------------------------------------------------------------------- *

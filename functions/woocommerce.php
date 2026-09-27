@@ -205,6 +205,160 @@ remove_action( 'woocommerce_before_main_content', 'woocommerce_breadcrumb', 20 )
 add_action( 'woocommerce_before_single_product_summary', 'woocommerce_breadcrumb', 4 );
 
 /**
+ * Lay out the single product page.
+ *
+ * Photo on the left, product info on the right, both above the fold on a
+ * desktop. The tabs go, and what was in them gets a place of its own:
+ *
+ *   Right column   title, star rating (or a link to write the first review),
+ *                  price, short text, add to cart, then the description and
+ *                  the details table
+ *   Below the fold the reviews, then the questions, then related products
+ *
+ * The sale badge sits on the photo. A wrapper round the badge and the gallery
+ * makes that possible without overriding a WooCommerce template.
+ *
+ * This runs when a product starts to render, not when the theme loads, for the
+ * same reason as the product card: WooCommerce may add its hooks late.
+ */
+function sgwrd_single_product_hooks() {
+
+	// One wrapper round the sale badge (10) and the gallery (20).
+	add_action( 'woocommerce_before_single_product_summary', 'sgwrd_product_media_open', 5 );
+	add_action( 'woocommerce_before_single_product_summary', 'sgwrd_product_media_close', 25 );
+
+	// No tabs. Their content moves to the right column and below the fold.
+	remove_action( 'woocommerce_after_single_product_summary', 'woocommerce_output_product_data_tabs', 10 );
+
+	// Right after the title (5), before the star rating (10) that only shows
+	// when there are reviews.
+	add_action( 'woocommerce_single_product_summary', 'sgwrd_product_rating_empty', 9 );
+
+	// After add to cart (30), before the SKU and category (40).
+	add_action( 'woocommerce_single_product_summary', 'sgwrd_product_description', 35 );
+	add_action( 'woocommerce_single_product_summary', 'sgwrd_product_details', 36 );
+
+	// Below the fold, before the upsells (15) and related products (20).
+	add_action( 'woocommerce_after_single_product_summary', 'sgwrd_product_sections', 10 );
+}
+add_action( 'woocommerce_before_single_product', 'sgwrd_single_product_hooks', 0 );
+
+/**
+ * Open the wrapper round the photo and its sale badge.
+ */
+function sgwrd_product_media_open() {
+
+	echo '<div class="product-media">';
+}
+
+/**
+ * Close the wrapper round the photo and its sale badge.
+ */
+function sgwrd_product_media_close() {
+
+	echo '</div>';
+}
+
+/**
+ * Say "Sale", like the product card does, not "Sale!".
+ *
+ * @return string
+ */
+function sgwrd_sale_flash() {
+
+	return '<span class="onsale">' . esc_html__( 'Sale', 'acf-starter' ) . '</span>';
+}
+add_filter( 'woocommerce_sale_flash', 'sgwrd_sale_flash' );
+
+/**
+ * Link to the reviews when a product has none yet.
+ *
+ * WooCommerce prints the star rating next to the title only when there are
+ * reviews. Without any, this line takes its place, so the way to the reviews
+ * section is always there.
+ */
+function sgwrd_product_rating_empty() {
+
+	global $product;
+
+	if ( ! $product instanceof WC_Product || ! wc_reviews_enabled() || ! comments_open() ) {
+		return;
+	}
+
+	if ( $product->get_review_count() > 0 ) {
+		return;
+	}
+
+	printf(
+		'<p class="product-rating product-rating--empty"><a href="#reviews">%s</a></p>',
+		esc_html__( 'No reviews yet. Write the first one.', 'acf-starter' )
+	);
+}
+
+/**
+ * Print the long description in the right column.
+ */
+function sgwrd_product_description() {
+
+	if ( '' === trim( (string) get_the_content() ) ) {
+		return;
+	}
+
+	echo '<div class="product-description">';
+	the_content();
+	echo '</div>';
+}
+
+/**
+ * Print the details table (attributes, weight, size) in the right column.
+ *
+ * The same test WooCommerce uses for its "Additional information" tab.
+ */
+function sgwrd_product_details() {
+
+	global $product;
+
+	if ( ! $product instanceof WC_Product ) {
+		return;
+	}
+
+	$has_size = apply_filters( 'wc_product_enable_dimensions_display', $product->has_weight() || $product->has_dimensions() );
+
+	if ( ! $product->has_attributes() && ! $has_size ) {
+		return;
+	}
+
+	echo '<div class="product-details">';
+	echo '<h2 class="product-details__title">' . esc_html__( 'Details', 'acf-starter' ) . '</h2>';
+	wc_display_product_attributes( $product );
+	echo '</div>';
+}
+
+/**
+ * Print the reviews and the questions below the fold.
+ *
+ * WooCommerce prints the reviews with id="reviews", which the star rating and
+ * the "write the first one" link point at.
+ */
+function sgwrd_product_sections() {
+
+	global $post;
+
+	if ( wc_reviews_enabled() && comments_open() ) {
+		echo '<section class="product-section product-section--reviews">';
+		comments_template();
+		echo '</section>';
+	}
+
+	if ( $post && sgwrd_has_faq( $post->ID ) ) {
+		echo '<section class="product-section product-section--faq">';
+		echo '<h2 class="product-section__title">' . esc_html__( 'Questions', 'acf-starter' ) . '</h2>';
+		sgwrd_the_faq( $post->ID );
+		echo '</section>';
+	}
+}
+
+/**
  * Set the number of related products.
  *
  * @param array $args Related product arguments.
@@ -278,45 +432,6 @@ function sgwrd_shop_term_faq() {
 	echo '</section>';
 }
 add_action( 'woocommerce_after_main_content', 'sgwrd_shop_term_faq', 5 );
-
-/**
- * Add the questions and answers of a product as an extra tab.
- *
- * A tab keeps the product page short, and it puts the answers where a buyer
- * looks for them.
- *
- * @param array $tabs The product tabs.
- * @return array
- */
-function sgwrd_product_faq_tab( $tabs ) {
-
-	global $post;
-
-	if ( ! $post || ! sgwrd_has_faq( $post->ID ) ) {
-		return $tabs;
-	}
-
-	$tabs['sgwrd_faq'] = array(
-		'title'    => __( 'Questions', 'acf-starter' ),
-		'priority' => 25,
-		'callback' => 'sgwrd_product_faq_tab_content',
-	);
-
-	return $tabs;
-}
-add_filter( 'woocommerce_product_tabs', 'sgwrd_product_faq_tab' );
-
-/**
- * Print the content of the product questions tab.
- */
-function sgwrd_product_faq_tab_content() {
-
-	global $post;
-
-	echo '<div class="faq faq--product">';
-	sgwrd_the_faq( $post->ID );
-	echo '</div>';
-}
 
 /*
  * ---------------------------------------------------------------------------

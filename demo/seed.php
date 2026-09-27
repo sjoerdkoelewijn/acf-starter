@@ -670,6 +670,51 @@ while ( ( $sgwrd_line = fgetcsv( $sgwrd_handle ) ) !== false ) {
 		);
 	}
 
+	// Every third product gets a few reviews, to show the rating next to the
+	// title and the reviews section. Once only: a rerun adds none.
+	if ( 0 === $sgwrd_made % 3 ) {
+
+		$sgwrd_has_reviews = (int) get_comments(
+			array(
+				'post_id'  => $product_id,
+				'meta_key' => SGWRD_DEMO_MARK, // phpcs:ignore WordPress.DB.SlowDBQuery
+				'count'    => true,
+			)
+		);
+
+		if ( ! $sgwrd_has_reviews ) {
+			$sgwrd_reviews = array(
+				array( 'Anna', 5, 'Beautiful quality. It gets softer with every wash.' ),
+				array( 'Mark', 4, 'Good fit. It runs a little large, so take one size down.' ),
+				array( 'Sophie', 5, 'Exactly as in the photos, and it came the next day.' ),
+			);
+
+			// Two or three reviews, so the averages differ between products.
+			foreach ( array_slice( $sgwrd_reviews, 0, 2 + ( $sgwrd_made % 2 ) ) as $sgwrd_review ) {
+				wp_insert_comment(
+					array(
+						'comment_post_ID'      => $product_id,
+						'comment_author'       => $sgwrd_review[0],
+						'comment_author_email' => strtolower( $sgwrd_review[0] ) . '@example.test',
+						'comment_content'      => $sgwrd_review[2],
+						'comment_type'         => 'review',
+						'comment_approved'     => 1,
+						'comment_meta'         => array(
+							'rating'        => $sgwrd_review[1],
+							'verified'      => 1,
+							SGWRD_DEMO_MARK => 1,
+						),
+					)
+				);
+			}
+
+			// WooCommerce keeps the average and the count on the product.
+			if ( class_exists( 'WC_Comments' ) ) {
+				WC_Comments::clear_transients( $product_id );
+			}
+		}
+	}
+
 	++$sgwrd_made;
 }
 

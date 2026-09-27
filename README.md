@@ -318,6 +318,14 @@ The theme overrides two templates:
 
 Both files keep every WooCommerce hook and filter, so plugins keep working.
 
+The product page is laid out with hooks, not a template override: the photo
+on the left with the sale badge on it, the product info on the right above the
+fold, then the reviews and the questions as sections below. The tabs are gone;
+the description and the details table sit in the right column. The star rating
+next to the title links down to the reviews, and a product with none shows a
+link to write the first one. See `sgwrd_single_product_hooks()` in
+`functions/woocommerce.php`.
+
 The cart page, the checkout page and the account page use the WooCommerce
 templates without a change. The theme gives them a layout with CSS only. A
 WooCommerce update can therefore never break the checkout.
