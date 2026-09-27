@@ -253,4 +253,39 @@ foreach ( parse_blocks( get_post_field( 'post_content', $sgwrd_home ) ) as $sgwr
 	);
 }
 
+/*
+ * Look closer at one block type: pass its name, for example
+ *   wp eval-file .../diagnose.php acf/cta
+ * and the diagnose prints the stored data and the front end markup of every
+ * block of that type on the home page.
+ */
+$sgwrd_focus = (string) ( $args[0] ?? '' );
+
+if ( $sgwrd_focus && $sgwrd_render ) {
+
+	sgwrd_diag_head( 'Close look: ' . $sgwrd_focus );
+
+	foreach ( parse_blocks( get_post_field( 'post_content', $sgwrd_home ) ) as $sgwrd_block ) {
+
+		if ( ( $sgwrd_block['blockName'] ?? '' ) !== $sgwrd_focus ) {
+			continue;
+		}
+
+		WP_CLI::log( '  -- stored data --' );
+		WP_CLI::log( '  ' . wp_json_encode( $sgwrd_block['attrs']['data'] ?? array(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES ) );
+
+		// What ACF reads back for the buttons, inside the block context.
+		if ( function_exists( 'acf_setup_meta' ) && function_exists( 'acf_prepare_block' ) ) {
+			$sgwrd_prepared = acf_prepare_block( $sgwrd_block['attrs'] );
+			acf_setup_meta( $sgwrd_block['attrs']['data'] ?? array(), $sgwrd_prepared['id'] ?? 'block_diag', true );
+			WP_CLI::log( '  -- get_field( buttons ) --' );
+			WP_CLI::log( '  ' . wp_json_encode( get_field( 'buttons' ), JSON_UNESCAPED_SLASHES ) );
+			acf_reset_meta( $sgwrd_prepared['id'] ?? 'block_diag' );
+		}
+
+		WP_CLI::log( '  -- front end markup --' );
+		WP_CLI::log( (string) acf_rendered_block( $sgwrd_block['attrs'], '', false, $sgwrd_home ) );
+	}
+}
+
 WP_CLI::success( 'Done. Nothing was changed.' );
