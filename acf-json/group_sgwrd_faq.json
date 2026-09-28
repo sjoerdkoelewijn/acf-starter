@@ -38,7 +38,7 @@
             },
             "layout": "block",
             "pagination": 0,
-            "min": 1,
+            "min": 0,
             "max": 0,
             "collapsed": "",
             "button_label": "Add question",
@@ -128,5 +128,5 @@
     "active": true,
     "description": "One set of fields for three places: the FAQ block on a page, a product, and a category.",
     "show_in_rest": 0,
-    "modified": 1790208000
+    "modified": 1790581645
 }
