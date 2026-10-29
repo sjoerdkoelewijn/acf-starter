@@ -72,10 +72,23 @@ add_filter( 'acf/settings/load_json', 'sgwrd_acf_json_load_point' );
  * backend, and ACF writes the change to /acf-json. You commit that file and
  * deploy it, and the next site reads the change back in.
  *
+ * The import reads the JSON file itself, as the ACF "Sync" button does. The
+ * copy that ACF keeps in memory has no sub fields: it stores those apart, so a
+ * repeater or a group would come in empty. During the import, Local JSON is
+ * off. Otherwise ACF writes each group back to its file halfway through the
+ * save, before the sub fields are in, and the file loses them as well.
+ *
  * To turn the automatic sync off:
  *   add_filter( 'sgwrd_acf_auto_sync', '__return_false' );
+ *
+ * To import every JSON file again, whatever its age, for example to repair a
+ * database that lost its sub fields:
+ *   wp eval 'sgwrd_acf_sync_field_groups( true );'
+ *
+ * @param bool $force True to import each JSON file, also when the database
+ *                    record is newer.
  */
-function sgwrd_acf_sync_field_groups() {
+function sgwrd_acf_sync_field_groups( $force = false ) {
 
 	if ( wp_doing_ajax() || ! function_exists( 'acf_get_field_groups' ) ) {
 		return;
@@ -91,6 +104,11 @@ function sgwrd_acf_sync_field_groups() {
 	}
 
 	$imported = array();
+	$files    = acf_get_local_json_files( 'acf-field-group' );
+
+	// Keep ACF from writing the files while it reads them in.
+	$json = acf_get_setting( 'json' );
+	acf_update_setting( 'json', false );
 
 	foreach ( acf_get_field_groups() as $group ) {
 
@@ -107,24 +125,29 @@ function sgwrd_acf_sync_field_groups() {
 		 * The group is in the database, and that copy is the same age or
 		 * newer. Somebody is working on it in the backend. Leave it alone.
 		 */
-		if ( $id && (int) ( $group['modified'] ?? 0 ) <= (int) get_post_modified_time( 'U', true, $id, true ) ) {
+		if ( ! $force && $id && (int) ( $group['modified'] ?? 0 ) <= (int) get_post_modified_time( 'U', true, $id, true ) ) {
 			continue;
 		}
 
-		$local = acf_get_local_field_group( $key );
-
-		if ( ! $local ) {
+		if ( empty( $files[ $key ] ) ) {
 			continue;
 		}
 
-		if ( acf_have_local_fields( $key ) ) {
-			$local['fields'] = acf_get_local_fields( $key );
+		$local = json_decode( (string) file_get_contents( $files[ $key ] ), true );
+
+		if ( ! is_array( $local ) ) {
+			continue;
 		}
+
+		// Update the record that is there instead of adding a second one.
+		$local['ID'] = $id;
 
 		acf_import_field_group( $local );
 
 		$imported[] = $local['title'] ?? $key;
 	}
+
+	acf_update_setting( 'json', $json );
 
 	if ( $imported ) {
 		set_transient( 'sgwrd_acf_synced', $imported, MINUTE_IN_SECONDS );

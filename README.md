@@ -255,6 +255,21 @@ the top of the admin says which groups came in.
 The comparison uses the `modified` timestamp that ACF writes into each JSON
 file. A database record can never be overwritten by an older file.
 
+The import never writes to `/acf-json`. It reads each JSON file in full, sub
+fields included, and Local JSON is off while it runs. So a sync leaves
+`git status` clean.
+
+### Repairing a database without sub fields
+
+Versions before this fix imported repeaters and groups without their sub
+fields, and wrote those empty groups back to `/acf-json`. If you see that on a
+site, restore the files with `git checkout -- acf-json`, then import every file
+again, whatever its age:
+
+```bash
+wp eval 'sgwrd_acf_sync_field_groups( true );'
+```
+
 ### Two people at the same time
 
 The rule "the newer one wins" is per field group, not per field. If two people
